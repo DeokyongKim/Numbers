@@ -1,4 +1,4 @@
-#include "./BOJ/9251.hpp"
+#include "./BOJ_SAMSUNG/14502.hpp"
 
 int main() {
 	freopen("input.txt", "r", stdin);
