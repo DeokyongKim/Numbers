@@ -21,25 +21,66 @@ bool comp(int a, int b) { return a > b; }
 
 void Spring() {
   for (int i = 1; i <= n; i++)
-    for (int j = 1; j <= n; j++)
-      for (int k = tree[i][j].size() - 1; k >= 0; k--) {
+    for (int j = 1; j <= n; j++){
+      int k = tree[i][j].size() - 1;
+      for (; k >= 0; k--) {
         int curAge = tree[i][j][k];
 
         if (map[i][j] >= curAge) {
           map[i][j] -= curAge;
+          tree[i][j][k]++;
         } else {
-          dead[i][j] += curAge / 2;
-          tree[i][j].erase(tree[i][j].begin() + k);
+          break;
         }
       }
+
+      for (; k >= 0; k--) {
+        int curAge = tree[i][j][k];
+
+        dead[i][j] += curAge / 2;
+        tree[i][j].erase(tree[i][j].begin() + k);
+      }
+    }
 }
 
 void Summer() {
-  
+  for (int i = 1; i <= n; i++)
+    for (int j = 1; j <= n; j++) {
+      map[i][j] += dead[i][j];
+      dead[i][j] = 0;
+    }
+}
+
+void Fall() {
+  for (int i = 1; i <= n; i++)
+    for (int j = 1; j <= n; j++)
+      for (int k = 0; k < tree[i][j].size(); k++)
+        if (tree[i][j][k] % 5 == 0) {
+          int dx[8] = {-1, -1, -1, 0, 0, 1, 1, 1};
+          int dy[8] = {-1, 0, 1, -1, 1, -1, 0, 1};
+
+          for (int dir = 0; dir < 8; dir++) {
+            int x = i + dx[dir];
+            int y = j + dy[dir];
+
+            if (x >= 1 && x <= n && y >= 1 && y <= n)
+              tree[x][y].push_back(1);
+          }
+        }
+}
+
+void Winter() {
+  for (int i = 1; i <= n; i++)
+    for (int j = 1; j <= n; j++)
+      map[i][j] += add[i][j];
 }
 
 void Investment() {
   for (int year = 0; year < end_year; year++) {
+    Spring();
+    Summer();
+    Fall();
+    Winter();
   }
 }
 
@@ -80,4 +121,6 @@ int run() {
       ans += tree[i][j].size();
 
   cout << ans << '\n';
+
+  return 0;
 }
