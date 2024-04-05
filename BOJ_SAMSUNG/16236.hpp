@@ -16,18 +16,16 @@ int n, map[25][25], fishes[10], ans;
 
 SHARK shark;
 
-bool isEnd() {
-  for (int i = 1; i <= 6; i++)
-    if (i < shark.size && fishes[i] > 0) return false;
-
-  return true;
-}
+bool doing = true;
 
 void findNextFish() {
   queue<SHARK> q;
   int visited[25][25] = {0, };
+  doing = false;
 
-  q.push({shark.x, shark.y, 0});
+  int minX, minY;
+
+  q.push({shark.x, shark.y, shark.size, 0});
   visited[shark.x][shark.y] = 1;
 
   while(!q.empty()) {
@@ -36,14 +34,30 @@ void findNextFish() {
 
     int curX = curShark.x;
     int curY = curShark.y;
-    int curCnt = curShark.size;
+    int curCnt = curShark.ate;
 
     if (map[curX][curY] > 0 && map[curX][curY] < shark.size) {
-      cout << curX << ' ' << curY << '\n';
+      minX = curX;
+      minY = curY;
+      
+      while(!q.empty()) {
+        SHARK tmp = q.front();
+        q.pop();
+        if (tmp.ate != curCnt) break;
+        if (map[tmp.x][tmp.y] == 0 || map[tmp.x][tmp.y] >= shark.size) continue;
+
+        if (minX > tmp.x) {
+          minX = tmp.x;
+          minY = tmp.y;
+        } else if (minX == tmp.x && minY > tmp.y) {
+          minX = tmp.x;
+          minY = tmp.y;
+        }
+      }
 
       map[shark.x][shark.y] = 0;
-      shark.x = curX;
-      shark.y = curY;
+      shark.x = minX;
+      shark.y = minY;
       shark.ate++;
       fishes[map[shark.x][shark.y]]--;
       map[shark.x][shark.y] = 0;
@@ -53,6 +67,7 @@ void findNextFish() {
         shark.ate = 0;
       }
 
+      doing = true;
       ans += curCnt;
       return;
     } 
@@ -66,8 +81,8 @@ void findNextFish() {
       if (nx >= 0 && nx < n && ny >= 0 && ny < n) {
         if (!visited[nx][ny]) {
           if (map[nx][ny] <= shark.size) {
-            q.push({nx, ny, curCnt+1});
             visited[nx][ny] = 1;
+            q.push({nx, ny, shark.size, curCnt+1});
           }
         }
       }
@@ -86,12 +101,13 @@ int run() {
         shark.y = j;
         shark.size = 2;
         shark.ate = 0;
+        map[i][j] = 0;
       } else {
         fishes[map[i][j]]++;
       }
     }
 
-  while(!isEnd()) {
+  while(doing) {
     findNextFish();
   }
 
