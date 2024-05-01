@@ -11,6 +11,7 @@ typedef struct _SHARK {
 } SHARK;
 
 int row, column, numOfSharks, sea[110][110];
+int copySea[110][110] = {0, };
 
 int isSharkAlive[10010];
 
@@ -28,16 +29,8 @@ int getOppositeDir(int dir) {
   if (dir == 2) return 1;
   if (dir == 3) return 4;
   if (dir == 4) return 3;
-}
 
-void printSea() {
-  for (int i = 0; i < row; i++) {
-    for (int j = 0; j < column; j++) {
-      cout << sea[i][j] << ' ' ;
-    }
-    cout << '\n';
-  }
-  cout << '\n';
+  return -1;
 }
 
 int run() {
@@ -51,29 +44,22 @@ int run() {
   }
   isSharkAlive[0] = 1;
 
-    printSea();
-
   while (fisherCol < column) {
     // Act 1
     fisherCol++;
 
     // Act 2
-    for (int i = 0; i < column; i++) {
-      bool got = false;
-      for (int j = 0; j < row; j++) {
-        int id = sea[j][i];
+    for (int j = 0; j < row; j++) {
+      int id = sea[j][fisherCol];
 
-        if (id == 0) continue;
+      if (id == 0) continue;
 
-        if (!isSharkAlive[id]) {
-          got = true;
-          isSharkAlive[id] = 1;
-          ans += sharks[id].size;
-          sea[j][i] = 0;
-          break;
-        }
+      if (!isSharkAlive[id]) {
+        isSharkAlive[id] = 1;
+        ans += sharks[id].size;
+        sea[j][fisherCol] = 0;
+        break;
       }
-      if (got) break;
     }
 
     // Act 3
@@ -85,9 +71,20 @@ int run() {
         int rowCut = row * 2 - 2;
         int colCut = column * 2 - 2;
 
-        // TODO: nx, ny가 음수일 때 해결하기
-        if (nx < 0) nx += rowCut;
-        if (ny < 0) ny += colCut;
+        if (rowCut == 0) rowCut = 1;
+        if (colCut == 0) colCut = 1;
+
+        // nx, ny가 음수일 때
+        if (nx < 0) {
+          int tmpx = nx * -1;
+          int tmp = tmpx/rowCut;
+          nx += (tmp + 2) * rowCut;
+        }
+        if (ny < 0) {
+          int tmpy = ny * -1;
+          int tmp = tmpy/colCut;
+          ny += (tmp + 2) * colCut;
+        }
 
         nx = nx % rowCut;
         ny = ny % colCut;
@@ -104,19 +101,30 @@ int run() {
         }
 
         sea[sharks[i].x][sharks[i].y] = 0;
-        if (sea[nx][ny] != 0) {
-          int id = sea[nx][ny];
+
+        if (copySea[nx][ny] != 0) {
+          int id = copySea[nx][ny];
+
           if (sharks[id].size < sharks[i].size) {
             isSharkAlive[id] = 1;
-            sea[nx][ny] = i;
+            copySea[nx][ny] = i;
+            sharks[i].x = nx;
+            sharks[i].y = ny;
           }
         } else {
-          sea[nx][ny] = i;
+          copySea[nx][ny] = i;
+          sharks[i].x = nx;
+          sharks[i].y = ny;
         }
       }
     }
 
-    printSea();
+    // Act 4.5 (sea <- copySea)
+    for (int i = 0; i < row; i++)
+      for (int j = 0; j < column; j++){
+        sea[i][j] = copySea[i][j];
+        copySea[i][j] = 0;  
+      }
   }
 
   cout << ans << '\n';
