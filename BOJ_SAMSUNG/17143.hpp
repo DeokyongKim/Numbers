@@ -11,7 +11,6 @@ typedef struct _SHARK {
 } SHARK;
 
 int row, column, numOfSharks, sea[110][110];
-int copySea[110][110] = {0, };
 
 int isSharkAlive[10010];
 
@@ -63,27 +62,28 @@ int run() {
     }
 
     // Act 3
+    for (int i = 0; i < row; i++)
+      for (int j = 0; j < column; j++)
+        sea[sharks[i].x][sharks[i].y] = 0;
+
     for (int i = 1; i <= numOfSharks; i++) {
       if (!isSharkAlive[i]) {
-        int nx = sharks[i].x + dirX[sharks[i].dir - 1] * sharks[i].vel;
-        int ny = sharks[i].y + dirY[sharks[i].dir - 1] * sharks[i].vel;
-
         int rowCut = row * 2 - 2;
         int colCut = column * 2 - 2;
 
         if (rowCut == 0) rowCut = 1;
         if (colCut == 0) colCut = 1;
 
+        int nx = sharks[i].x + dirX[sharks[i].dir - 1] * (sharks[i].vel % rowCut);
+        int ny = sharks[i].y + dirY[sharks[i].dir - 1] * (sharks[i].vel % colCut);
+
+
         // nx, ny가 음수일 때
         if (nx < 0) {
-          int tmpx = nx * -1;
-          int tmp = tmpx/rowCut;
-          nx += (tmp + 2) * rowCut;
+          nx += rowCut;
         }
         if (ny < 0) {
-          int tmpy = ny * -1;
-          int tmp = tmpy/colCut;
-          ny += (tmp + 2) * colCut;
+          ny += colCut;
         }
 
         nx = nx % rowCut;
@@ -100,31 +100,22 @@ int run() {
           sharks[i].dir = getOppositeDir(sharks[i].dir);
         }
 
-        sea[sharks[i].x][sharks[i].y] = 0;
-
-        if (copySea[nx][ny] != 0) {
-          int id = copySea[nx][ny];
+        if (sea[nx][ny] != 0) {
+          int id = sea[nx][ny];
 
           if (sharks[id].size < sharks[i].size) {
             isSharkAlive[id] = 1;
-            copySea[nx][ny] = i;
+            sea[nx][ny] = i;
             sharks[i].x = nx;
             sharks[i].y = ny;
           }
         } else {
-          copySea[nx][ny] = i;
+          sea[nx][ny] = i;
           sharks[i].x = nx;
           sharks[i].y = ny;
         }
       }
     }
-
-    // Act 4.5 (sea <- copySea)
-    for (int i = 0; i < row; i++)
-      for (int j = 0; j < column; j++){
-        sea[i][j] = copySea[i][j];
-        copySea[i][j] = 0;  
-      }
   }
 
   cout << ans << '\n';
