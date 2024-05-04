@@ -31,16 +31,6 @@ SHARK sharks[10010];
 
 int fisher = -1, ans;
 
-void printSea() {
-  for (int i = 0; i < row; i++) {
-    for (int j = 0; j < col; j++) {
-      cout << sea[i][j] << ' ';
-    }
-    cout << '\n';
-  }
-  cout << '\n';
-}
-
 int run() {
   cin >> row >> col >> sharkNum;
 
@@ -52,18 +42,17 @@ int run() {
     sea[sharks[i].x][sharks[i].y] = i;
   }
 
-  printSea();
-
   while (fisher < col) {
     // 1. fisher move
     fisher++;
 
     // 2. fishing
     for (int i = 0; i < row; i++) {
-      if (sea[i][fisher] && sharks[i].alive) {
-        ans += sharks[i].size;
-        sharks[i].alive = false;
-        sea[sharks[i].x][sharks[i].y] = 0;
+      int id = sea[i][fisher];
+      if (id && sharks[id].alive) {
+        ans += sharks[id].size;
+        sharks[id].alive = false;
+        sea[sharks[id].x][sharks[id].y] = 0;
         break;
       }
     }
@@ -73,7 +62,7 @@ int run() {
       for (int j = 0; j < col; j++)
         sea[i][j] = 0;
 
-    for (int i = 1; i < sharkNum; i++) {
+    for (int i = 1; i <= sharkNum; i++) {
       if (sharks[i].alive) {
         int newRow = row * 2 - 2;
         int newCol = col * 2 - 2;
@@ -87,6 +76,9 @@ int run() {
         nx = (nx < 0 ? nx + newRow : nx);
         ny = (ny < 0 ? ny + newCol : ny);
 
+        nx %= newRow;
+        ny %= newCol;
+
         if (nx >= row) {
           nx = row - 1 - (nx - (row - 1));
           sharks[i].dir = getOppositeDirection(sharks[i].dir);
@@ -96,8 +88,9 @@ int run() {
           sharks[i].dir = getOppositeDirection(sharks[i].dir);
         }
 
+        sharks[i].x = nx;
+        sharks[i].y = ny;
         if (sea[nx][ny]) {
-          cout << sea[nx][ny] << " VS " << i << '\n';
           if (sharks[sea[nx][ny]].size < sharks[i].size) {
             sharks[sea[nx][ny]].alive = false;
             sea[nx][ny] = i;
@@ -109,8 +102,6 @@ int run() {
         }
       }
     }
-
-    printSea();
   }
 
   cout << ans << '\n';
