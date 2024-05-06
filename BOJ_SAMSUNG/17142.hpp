@@ -1,16 +1,16 @@
 #include <iostream>
 #include <vector>
+#include <queue>
 
 using namespace std;
 
 typedef struct _VIRUS {
   int x;
   int y;
+  int t;
 } VIRUS;
 
 int n, m, board[60][60], ans = -1;
-
-bool did = false;
 
 int selected[15] = {0, };
 
@@ -19,8 +19,8 @@ vector<VIRUS> virus;
 int getTimeForInfection() {
   int tmpBoard[60][60] = {0, };
   int notInfected = 0;
-
-  vector<VIRUS> tmpVirus;
+  
+  queue<VIRUS> q;
 
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
@@ -29,54 +29,44 @@ int getTimeForInfection() {
     }
   }
 
+  if (notInfected == 0) return 0;
+
   for (int i = 0; i < virus.size(); i++) {
-    if (selected[i]) tmpVirus.push_back({virus[i].x, virus[i].y});
+    if (selected[i]) {
+      q.push({virus[i].x, virus[i].y, 0});
+      tmpBoard[virus[i].x][virus[i].y] = 3;  
+    }
   }
 
-  int t = 0;
-  while (true) {
-    bool infected = false;
+  // infect
+  while (!q.empty()) {
+    int i = q.front().x;
+    int j = q.front().y;
+    int curTime = q.front().t;
+    q.pop();
 
-    // check all board
-    if (notInfected == 0) return t;
+    int dx[4] = {0, 1, 0, -1};
+    int dy[4] = {1, 0, -1, 0};
 
-    // infect
-    for (int v = 0; v < tmpVirus.size(); v++) {
-      int i = tmpVirus[v].x;
-      int j = tmpVirus[v].y;
-      
-      if (tmpBoard[i][j] == 3) {
-        int dx[4] = {0, 1, 0, -1};
-        int dy[4] = {1, 0, -1, 0};
+    for (int dir = 0; dir < 4; dir++) {
+      int nx = i + dx[dir];
+      int ny = j + dy[dir];
 
-        for (int dir = 0; dir < 4; dir++) {
-          int nx = i + dx[dir];
-          int ny = j + dy[dir];
-
-          if (nx >= 0 && nx < n && ny >= 0 && ny < n) {
-            if (tmpBoard[nx][ny] == 0 || tmpBoard[nx][ny] == 2) {
-              if (tmpBoard[nx][ny] == 0) notInfected--;
-              tmpVirus.push_back({nx, ny});
-              infected = true;
-            }
-          }
+      if (nx >= 0 && nx < n && ny >= 0 && ny < n) {
+        if (tmpBoard[nx][ny] == 0 || tmpBoard[nx][ny] == 2) {
+          q.push({nx, ny, curTime+1});
+          if (tmpBoard[nx][ny] == 0) notInfected--;
+          tmpBoard[nx][ny] = 3;
         }
       }
     }
 
-    if (infected) {
-      for (int v = 0; v < tmpVirus.size(); v++)
-        tmpBoard[tmpVirus[v].x][tmpVirus[v].y] = 3;
+    if (notInfected == 0) {
+      return curTime + 1;
     }
-
-    // if board is not filled and nothing got infected
-    // = CAN'T INFECT ANYMORE
-    if (notInfected > 0 && !infected) {
-      return -1;
-    }
-
-    t++;
   }
+
+  return -1;
 }
 
 void solve(int check, int lastNum) {
@@ -103,7 +93,7 @@ int run() {
     for (int j = 0; j < n; j++) {
       cin >> board[i][j];
       if (board[i][j] == 2) {
-        virus.push_back({i, j});
+        virus.push_back({i, j, 0});
       }
     }
   }
