@@ -2,5 +2,10 @@
   "files.associations": {
     "map": "cpp",
     "iostream": "cpp"
-  }
+  },
+  "C_Cpp.errorSquiggles": "disabled",
+  "editor.codeActionWidget.includeNearbyQuickFixes": false,
+  "notebook.output.minimalErrorRendering": false,
+  "debug.javascript.breakOnConditionalError": true,
+  "markdown.validate.enabled": true
 }
