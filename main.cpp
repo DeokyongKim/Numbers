@@ -1,4 +1,4 @@
-#include "./BOJ/10564.hpp"
+#include "./BOJ/11066.hpp"
 #include <time.h>
 
 int main() {
