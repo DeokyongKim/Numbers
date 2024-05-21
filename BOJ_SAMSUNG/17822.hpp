@@ -8,7 +8,7 @@ int discQuantity, integerQuantity, rotateNumber;
 int disc[55][55], eachDiscNum[55];
 
 void rotateDisc(int idx, int dir, int num) {
-  for (int i = idx; i < discQuantity; i += (idx+1)) {
+  for (int i = idx; i < discQuantity; i += idx) {
 
     // apply direction
     num *= (dir == 0 ? -1 : 1);
@@ -38,7 +38,7 @@ void clearAdjacency() {
   int haveAdjacency[55] = {0, };
   
   // check are there same numbers in adjacency
-  for (int i = 0; i < discQuantity; i++) {
+  for (int i = 1; i <= discQuantity; i++) {
     for (int j = 0; j < integerQuantity; j++) {
       if (disc[i][j] < 0) continue;
 
@@ -68,7 +68,7 @@ void clearAdjacency() {
   }
 
   // erase and relocate numbers
-  for (int i = 0; i < discQuantity; i++) {
+  for (int i = 1; i <= discQuantity; i++) {
     if (haveAdjacency[i]) {
       int tmp = 0;
       for (int j = 0; j < integerQuantity; j++) {
@@ -93,7 +93,7 @@ void clearAdjacency() {
 }
 
 void printDisc() {
-  for (int i = 0; i < discQuantity; i++) {
+  for (int i = 1; i <= discQuantity; i++) {
     for (int j = 0; j < integerQuantity; j++) {
       cout << disc[i][j] << ' ';
     }
@@ -105,7 +105,7 @@ void printDisc() {
 int run() {
   cin >> discQuantity >> integerQuantity >> rotateNumber;
 
-  for (int i = 0; i < discQuantity; i++) {
+  for (int i = 1; i <= discQuantity; i++) {
     for (int j = 0; j < integerQuantity; j++) {
       cin >> disc[i][j];
     }
@@ -118,7 +118,7 @@ int run() {
     int discIndex, rotateDirection, rotateCount;
     cin >> discIndex >> rotateDirection >> rotateCount;
 
-    rotateDisc(discIndex - 1, rotateDirection, rotateCount);
+    rotateDisc(discIndex, rotateDirection, rotateCount);
     printDisc();
 
     clearAdjacency();
@@ -128,7 +128,7 @@ int run() {
   }
 
   int sum = 0;
-  for (int i = 0; i < discQuantity; i++) {
+  for (int i = 1; i <= discQuantity; i++) {
     for (int j = 0; j < integerQuantity; j++) {
       if (disc[i][j] > 0) sum += disc[i][j];
     }
