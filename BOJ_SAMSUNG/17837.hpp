@@ -2,7 +2,7 @@
 #define WHITE 0
 #define RED 1
 #define BLUE 2
-#define ENDTURN 3
+#define ENDTURN 1000
 #define ENDPIECE 4
 
 using namespace std;
@@ -73,9 +73,11 @@ int findPieceIndexInBoard(int pieceIndex) {
 
   for (int i = 0; i < boardNum[x][y]; i++)
     if (board[x][y][i] == pieceIndex) return i;
+
+  return -1;
 }
 
-void white(int idx) {
+bool white(int idx) {
   int x = piece[idx].row;
   int y = piece[idx].col;
   int nx = x + direction[piece[idx].dir].x;
@@ -83,18 +85,34 @@ void white(int idx) {
  
   int startIdx = findPieceIndexInBoard(idx);
   int endIdx = boardNum[x][y];
+
+  if (startIdx < 0) {
+    cout << "SOMETHING WRONG" << '\n';
+    cout << idx << ' ' << x << ' ' << y << '\n';
+    return true;
+  }
 
   for (int i = startIdx; i < endIdx; i++) {
-    piece[i].row = nx;
-    piece[i].col = ny;
+    int pIdx = board[x][y][i];
+    cout << pIdx << " : " << piece[pIdx].row << ' ' << piece[pIdx].col << '\n';
+    
+    piece[pIdx].row = nx;
+    piece[pIdx].col = ny;
+    cout << pIdx << " : " << piece[pIdx].row << ' ' << piece[pIdx].col << '\n';
 
-    board[nx][ny][boardNum[nx][ny]++] = board[x][y][i];
+    board[nx][ny][boardNum[nx][ny]++] = pIdx;
     board[x][y][i] = 0;
     boardNum[x][y]--;
+
+    if (boardNum[nx][ny] >= ENDPIECE) {
+      cout << turn << '\n';
+      return true;
+    }
   }
+  return false;
 }
 
-void red(int idx) {
+bool red(int idx) {
   int x = piece[idx].row;
   int y = piece[idx].col;
   int nx = x + direction[piece[idx].dir].x;
@@ -103,14 +121,32 @@ void red(int idx) {
   int startIdx = findPieceIndexInBoard(idx);
   int endIdx = boardNum[x][y];
 
-  for (int i = endIdx-1; i >= startIdx; i--) {
-    piece[i].row = nx;
-    piece[i].col = ny;
+  cout << idx << ' ' << startIdx << ' ' << endIdx << '\n';
 
-    board[nx][ny][boardNum[nx][ny]++] = board[x][y][i];
+  if (startIdx < 0) {
+    cout << "SOMETHING WRONG" << '\n';
+    cout << idx << ' ' << x << ' ' << y << '\n';
+    return true;
+  }
+
+  for (int i = endIdx-1; i >= startIdx; i--) {
+    int pIdx = board[x][y][i];
+    cout << "DOING: " << pIdx << '\n';
+    cout << piece[pIdx].row << ' ' << piece[pIdx].col << '\n';
+    piece[pIdx].row = nx;
+    piece[pIdx].col = ny;
+    cout << piece[pIdx].row << ' ' << piece[pIdx].col << '\n';
+
+    board[nx][ny][boardNum[nx][ny]++] = pIdx;
     board[x][y][i] = 0;
     boardNum[x][y]--;
+
+    if (boardNum[nx][ny] >= ENDPIECE) {
+      cout << turn << '\n';
+      return true;
+    }
   }
+  return false;
 }
 
 int getOppositeDirectionIndex(int dir) {
@@ -122,7 +158,7 @@ int getOppositeDirectionIndex(int dir) {
   return 0;
 }
 
-void blue(int idx) {
+bool blue(int idx) {
   int x = piece[idx].row;
   int y = piece[idx].col;
   int nDir = getOppositeDirectionIndex(piece[idx].dir);
@@ -130,41 +166,34 @@ void blue(int idx) {
   int nx = x + direction[nDir].x;
   int ny = y + direction[nDir].y;
 
-  if (boardColor[nx][ny] == BLUE) return;
-  else if (boardColor[nx][ny] == WHITE) white(idx);
-  else if (boardColor[nx][ny] == RED) red(idx);
+  if (boardColor[nx][ny] == BLUE) return false;
+  else if (boardColor[nx][ny] == WHITE) return white(idx);
+  else if (boardColor[nx][ny] == RED) return red(idx);
 }
 
-void move() {
+bool move() {
   for (int i = 1; i <= k; i++) {
     int nx = piece[i].row + direction[piece[i].dir].x;
     int ny = piece[i].col + direction[piece[i].dir].y;
 
-    // cout << piece[i].row << ' ' << piece[i].col << ' ' << piece[i].dir << '\n';
+    cout << i << " : " << piece[i].row << ' ' << piece[i].col << '\n';
 
+    bool end = false;
     if (boardColor[nx][ny] == WHITE) {
       cout << "WHITE!!\n";
 
-      white(i);
+      end = white(i);
     } else if (boardColor[nx][ny] == RED) {
       cout << "RED!!\n";
 
-      red(i);
+      end = red(i);
     } else if (boardColor[nx][ny] == BLUE) {
       cout << "BLUE!!\n";
-      blue(i);
+      end = blue(i);
     }
 
-    printBoard();
-  }
-}
-
-bool isEnd() {
-  for (int i = 1; i <= k; i++) {
-    int x = piece[i].row;
-    int y = piece[i].col;
-
-    if (boardNum[x][y] >= 4) return true;
+    // printBoard();
+    if (end) return end;
   }
   return false;
 }
@@ -187,25 +216,13 @@ int run() {
     boardNum[piece[i].row][piece[i].col] = 1;
   }
 
-  for (int i = 0; i <= n+1; i++) {
-    for (int j = 0; j <= n+1; j++) {
-      cout << boardColor[i][j] << ' ';
-    }
-    cout << '\n';
-  }
-
   printBoard();
   cout << "--------------------\n\n";
 
   for (; turn <= ENDTURN; turn++) {
-    move();
+    if (move()) return 0;
 
     cout << "--------------------\n\n";
-
-    if(isEnd()) {
-      cout << turn << '\n';
-      return 0;
-    }
   }
 
   if (turn > ENDTURN) cout << -1 << '\n';
