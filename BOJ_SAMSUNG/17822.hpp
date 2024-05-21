@@ -8,7 +8,7 @@ int discQuantity, integerQuantity, rotateNumber;
 int disc[55][55], eachDiscNum[55];
 
 void rotateDisc(int idx, int dir, int num) {
-  for (int i = idx; i < discQuantity; i += idx) {
+  for (int i = idx; i <= discQuantity; i += idx) {
 
     // apply direction
     num *= (dir == 0 ? -1 : 1);
