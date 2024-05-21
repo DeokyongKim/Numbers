@@ -5,7 +5,7 @@ using namespace std;
 int discQuantity, integerQuantity, rotateNumber;
 
 // disc: dics의 숫자가 적혀 있음
-int disc[55][55], eachDiscNum[55];
+int disc[55][55];
 
 void rotateDisc(int idx, int dir, int num) {
   // apply direction
@@ -32,34 +32,33 @@ void rotateDisc(int idx, int dir, int num) {
   }
 }
 
+bool did = false;
 void clearAdjacency() {
   int adjacency[55][55] = {0, };
-  int haveAdjacency[55] = {0, };
-  
+  did = false;
+
   // check are there same numbers in adjacency
   for (int i = 1; i <= discQuantity; i++) {
     for (int j = 0; j < integerQuantity; j++) {
       if (disc[i][j] < 0) continue;
 
       if (j - 1 >= 0 && disc[i][j] == disc[i][j-1]) {
-        haveAdjacency[i] = 1;
+        did = true;
         adjacency[i][j] = 1;
         adjacency[i][j-1] = 1;
       }
       if (j + 1 < integerQuantity && disc[i][j] == disc[i][j+1]) {
-        haveAdjacency[i] = 1;
+        did = true;
         adjacency[i][j] = 1;
         adjacency[i][j+1] = 1;
       }
       if (i - 1 >= 0 && disc[i][j] == disc[i-1][j]) {
-        haveAdjacency[i] = 1;
-        haveAdjacency[i-1] = 1;
+        did = true;
         adjacency[i][j] = 1;
         adjacency[i-1][j] = 1;
       }
       if (i + 1 < discQuantity && disc[i][j] == disc[i+1][j]) {
-        haveAdjacency[i] = 1;
-        haveAdjacency[i+1] = 1;
+        did = true;
         adjacency[i][j] = 1;
         adjacency[i+1][j] = 1;
       }
@@ -67,28 +66,34 @@ void clearAdjacency() {
   }
 
   // erase and relocate numbers
-  for (int i = 1; i <= discQuantity; i++) {
-    if (haveAdjacency[i]) {
-      int tmp = 0;
+  if (did) {
+    for (int i = 1; i <= discQuantity; i++) {
       for (int j = 0; j < integerQuantity; j++) {
         if (adjacency[i][j] == 1) {
           disc[i][j] = -1;
-          tmp++;
         }
       }
-      eachDiscNum[i] = tmp;
-    } else {
+    }
+  } else {
       float mean;
-      for (int j = 0; j < integerQuantity; j++) {
-        if (disc[i][j] > 0) mean += disc[i][j];
+      int tmp = 0;
+
+      for (int i = 1; i <= discQuantity; i++) {
+        for (int j = 0; j < integerQuantity; j++) {
+          if (disc[i][j] > 0) {
+            tmp++;
+            mean += disc[i][j];
+          }
+        }
       }
-      mean /= (float)eachDiscNum[i];
-      for (int j = 0; j < integerQuantity; j++) {
-        if (mean < disc[i][j]) disc[i][j]--;
-        else if (mean > disc[i][j]) disc[i][j]++;
+      mean /= (float)tmp;
+      for (int i = 1; i <= discQuantity; i++) {
+        for (int j = 0; j < integerQuantity; j++) {
+          if (mean < disc[i][j]) disc[i][j]--;
+          else if (mean > disc[i][j]) disc[i][j]++;
+        }
       }
     }
-  }
 }
 
 void printDisc() {
@@ -108,7 +113,6 @@ int run() {
     for (int j = 0; j < integerQuantity; j++) {
       cin >> disc[i][j];
     }
-    eachDiscNum[i] = integerQuantity;
   }
 
   printDisc();
