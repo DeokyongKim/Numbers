@@ -8,27 +8,26 @@ int discQuantity, integerQuantity, rotateNumber;
 int disc[55][55], eachDiscNum[55];
 
 void rotateDisc(int idx, int dir, int num) {
-  for (int i = idx; i <= discQuantity; i += idx) {
+  // apply direction
+  num *= (dir == 0 ? -1 : 1);
 
-    // apply direction
-    num *= (dir == 0 ? -1 : 1);
+  // make num to positive number 
+  num = num % integerQuantity + (num < 0 ? integerQuantity : 0);
 
-    int disctop = 0;
-    
-    // make num to positive number 
-    num = num % integerQuantity + (num < 0 ? integerQuantity : 0);
+  int disctop = 0;
+  
+  disctop = (disctop + num) % integerQuantity;
 
-    disctop = (disctop + num) % integerQuantity;
-
+  for (int discIdx = idx; discIdx <= discQuantity; discIdx += idx) {
     // relocate numbers to proper position
     int tmpDisc[55] = {0, };
 
     for (int i = 0; i < integerQuantity; i++) {
-      tmpDisc[i] = disc[idx][(i + disctop) % integerQuantity];
+      tmpDisc[i] = disc[discIdx][(i + disctop) % integerQuantity];
     }
 
     for (int i = 0; i < integerQuantity; i++) {
-      disc[idx][i] = tmpDisc[i];
+      disc[discIdx][i] = tmpDisc[i];
     }
   }
 }
