@@ -42,12 +42,12 @@ void clearAdjacency() {
     for (int j = 0; j < integerQuantity; j++) {
       if (disc[i][j] < 0) continue;
 
-      if (j - 1 >= 0 && disc[i][j] == disc[i][j-1]) {
+      if (disc[i][j] == disc[i][j - 1 >= 0 ? j-1 : integerQuantity-1]) {
         did = true;
         adjacency[i][j] = 1;
         adjacency[i][j-1] = 1;
       }
-      if (j + 1 < integerQuantity && disc[i][j] == disc[i][j+1]) {
+      if (disc[i][j] == disc[i][j + 1 < integerQuantity ? j+1 : 0]) {
         did = true;
         adjacency[i][j] = 1;
         adjacency[i][j+1] = 1;
@@ -115,19 +115,13 @@ int run() {
     }
   }
 
-  printDisc();
-
   for (int testCount = 0; testCount < rotateNumber; testCount++) {
     int discIndex, rotateDirection, rotateCount;
     cin >> discIndex >> rotateDirection >> rotateCount;
 
     rotateDisc(discIndex, rotateDirection, rotateCount);
-    printDisc();
 
     clearAdjacency();
-
-    printDisc();
-    cout << "===========\n";
   }
 
   int sum = 0;
