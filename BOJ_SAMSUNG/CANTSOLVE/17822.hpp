@@ -1,3 +1,5 @@
+//abandoned...
+
 #include <iostream>
 
 using namespace std;
@@ -8,11 +10,9 @@ int discQuantity, integerQuantity, rotateNumber;
 int disc[55][55];
 
 void rotateDisc(int idx, int dir, int num) {
-  // apply direction
-  num *= (dir == 0 ? -1 : 1);
+  num = num % integerQuantity;
 
-  // make num to positive number 
-  num = num % integerQuantity + (num < 0 ? integerQuantity : 0);
+  if (dir == 0) num = integerQuantity - num;
 
   int disctop = 0;
   
@@ -75,18 +75,18 @@ void clearAdjacency() {
       }
     }
   } else {
-      float mean;
+      double sum = 0;
       int tmp = 0;
 
       for (int i = 1; i <= discQuantity; i++) {
         for (int j = 0; j < integerQuantity; j++) {
-          if (disc[i][j] > 0) {
+          if (disc[i][j] >= 0) {
             tmp++;
-            mean += disc[i][j];
+            sum += (double)disc[i][j];
           }
         }
       }
-      mean /= (float)tmp;
+      double mean = (double)sum / (double)tmp;
       for (int i = 1; i <= discQuantity; i++) {
         for (int j = 0; j < integerQuantity; j++) {
           if (mean < disc[i][j]) disc[i][j]--;
@@ -94,6 +94,15 @@ void clearAdjacency() {
         }
       }
     }
+}
+
+bool checkIsThereAnyNumber() {
+  for (int i = 1; i <= discQuantity; i++) {
+    for (int j = 0; j < integerQuantity; j++) {
+      if (disc[i][j] >= 0) return true;
+    }
+  }
+  return false;
 }
 
 void printDisc() {
@@ -121,7 +130,7 @@ int run() {
 
     rotateDisc(discIndex, rotateDirection, rotateCount);
 
-    clearAdjacency();
+    if (checkIsThereAnyNumber() > 0) clearAdjacency();
   }
 
   int sum = 0;
