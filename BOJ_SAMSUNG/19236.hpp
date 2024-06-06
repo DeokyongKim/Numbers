@@ -38,7 +38,7 @@ void solve(int sharkX, int sharkY, int sharkDir, int sum, int SEA[5][5], FISH FI
 
   // cout << "X: " << sharkX << " Y: " << sharkY << " DIR: " << sharkDir << " SUM: " << sum << '\n';
 
-  if (nx >= 4 || nx < 0 || ny >= 4 || ny < 0 || SEA[nx][ny] == 0) {
+  if (nx >= 4 || nx < 0 || ny >= 4 || ny < 0) {
       // cout << "SUM: " << sum << '\n';
     if (sum > ans) {
       ans = sum;
@@ -122,7 +122,7 @@ void solve(int sharkX, int sharkY, int sharkDir, int sum, int SEA[5][5], FISH FI
   // }
   // cout << '\n';
 
-
+  bool moved = false;
   // move shark
   int gain = 1;
   while (true) {
@@ -141,6 +141,8 @@ void solve(int sharkX, int sharkY, int sharkDir, int sum, int SEA[5][5], FISH FI
 
       int nextSharkDir = fishList[id].dir;
 
+      moved = true;
+
       isDead[id] = 1;
       sea[nextX][nextY] = -1;
       // cout << "AFTER SHARK: \n";
@@ -157,6 +159,13 @@ void solve(int sharkX, int sharkY, int sharkDir, int sum, int SEA[5][5], FISH FI
       
       sea[sharkX][sharkY] = -1;
     }
+  }
+
+  if (!moved) {
+    if (sum > ans) {
+      ans = sum;
+    }
+    return;
   }
 }
 
