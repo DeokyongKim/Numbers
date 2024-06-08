@@ -1,3 +1,6 @@
+// Always doubt
+// Nothing is natural, obvious, sure
+
 #include <iostream>
 #include <queue>
 #include <vector>
