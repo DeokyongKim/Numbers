@@ -90,7 +90,7 @@ void clearAdjacency() {
       for (int i = 1; i <= discQuantity; i++) {
         for (int j = 0; j < integerQuantity; j++) {
           if (mean < disc[i][j]) disc[i][j]--;
-          else if (mean > disc[i][j]) disc[i][j]++;
+          if (mean > disc[i][j]) disc[i][j]++;
         }
       }
     }
