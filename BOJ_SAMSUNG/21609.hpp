@@ -21,7 +21,8 @@ int board[25][25];
 void printBoard() {
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
-      cout << board[i][j] << ' ';
+      if (board[i][j] == -2) cout << '.' << '\t';
+      else cout << board[i][j] << '\t';
     }
     cout << '\n';
   }
@@ -39,6 +40,7 @@ BLOCK bfs(COORDI input, int localBoard[25][25], int mode) {
 
   q.push(input);
   visited[input.x][input.y] = 1;
+  localBoard[input.x][input.y] = -2;
 
   COORDI direction[4] = {
     {1, 0},
@@ -76,6 +78,8 @@ BLOCK bfs(COORDI input, int localBoard[25][25], int mode) {
         q.push({nx, ny});
         visited[nx][ny] = 1;
 
+        if (localBoard[nx][ny] == 0) continue;
+
         if (standard.x > nx) {
           standard = {nx, ny};
         } else if (standard.x == nx && standard.y < ny) {
@@ -84,6 +88,8 @@ BLOCK bfs(COORDI input, int localBoard[25][25], int mode) {
       }
     }
   }
+
+  if (blockCnt < 2) return {{-1, -1}, blockCnt, rainbowCnt};
 
   return {standard, blockCnt, rainbowCnt};
 }
@@ -103,23 +109,21 @@ BLOCK getLargestBlock() {
       if (tmpBoard[i][j] > 0) {
         BLOCK tmp = bfs({i, j}, tmpBoard, 0);
 
+        if (tmp.standard.x == -1) continue;
+
         if (tmp.blockCnt > largestBlock.blockCnt) {
           largestBlock = tmp;
-          cout << "NUM: " << board[i][j] << ' '<<  i << ' ' << j << " BLOCKCNT: " << tmp.blockCnt << '\n';
         } else if (tmp.blockCnt == largestBlock.blockCnt) {
           if (tmp.rainbowCnt > largestBlock.rainbowCnt) {
             largestBlock = tmp;
-          cout << "NUM: " << board[i][j] << ' '<<  i << ' ' << j << " BLOCKCNT: " << tmp.blockCnt << '\n';
 
           } else if (tmp.rainbowCnt == largestBlock.rainbowCnt) {
-            if (tmp.standard.x < largestBlock.standard.x) {
+            if (tmp.standard.x > largestBlock.standard.x) {
               largestBlock = tmp;
-          cout << "NUM: " << board[i][j] << ' '<<  i << ' ' << j << " BLOCKCNT: " << tmp.blockCnt << '\n';
 
             } else if (tmp.standard.x == largestBlock.standard.x) {
-              if (tmp.standard.y < largestBlock.standard.y) {
+              if (tmp.standard.y > largestBlock.standard.y) {
                 largestBlock = tmp;
-          cout << "NUM: " << board[i][j] << ' '<<  i << ' ' << j << " BLOCKCNT: " << tmp.blockCnt << '\n';
 
               }
             }
@@ -133,7 +137,7 @@ BLOCK getLargestBlock() {
 }
 
 void deleteBlock(COORDI input) {
-  bfs(input, board, 1);
+  BLOCK largestBlock = bfs(input, board, 1);
 }
 
 bool getBoardScore() {
@@ -149,15 +153,16 @@ bool getBoardScore() {
 }
 
 void applyGravity() {
-  for (int i = n-1; i > 0; i--) {
-    for (int j = 0; j < n; j++) {
-      // don't check block
-      if (board[i][j] >= -1) continue;
+  for (int k = 0; k < n; k++) {
+    for (int i = n-2; i >= 0; i--) {
+      for (int j = 0; j < n; j++) {
+        // don't check block
+        if (board[i][j] < 0) continue;
 
-      // if [i][j] is empty, check up block
-      if (board[i-1][j] >= 0) {
-        board[i][j] = board[i-1][j];
-        board[i-1][j] = -2;
+        if (board[i+1][j] == -2) {
+          board[i+1][j] = board[i][j];
+          board[i][j] = -2;
+        }
       }
     }
   }
@@ -173,30 +178,24 @@ void rotate() {
 
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
-      board[n-1-j][i] = board[i][j];
+      board[n-1-j][i] = tmpBoard[i][j];
     }
   }
 }
 
 void moveBlock() {
   applyGravity();
-  printBoard();
 
   rotate();
-  printBoard();
 
   applyGravity();
-  printBoard();
 }
 
 void autoplay() {
-  printBoard();
   while(true) {
     if (!getBoardScore()) {
       break;
     }
-
-    printBoard();
 
     moveBlock();
   }
