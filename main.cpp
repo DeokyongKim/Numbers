@@ -1,4 +1,4 @@
-#include "./BOJ_SAMSUNG/21609.hpp"
+#include "./BOJ_SAMSUNG/21610.hpp"
 #include <time.h>
 
 int main() {
