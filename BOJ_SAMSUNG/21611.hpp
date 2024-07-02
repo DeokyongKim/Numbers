@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 
 using namespace std;
 
@@ -7,310 +8,42 @@ typedef struct _COORDINATE {
   int y;
 } COORDINATE;
 
-int n, board[60][60], m;
+typedef struct _MARBLE {
+  int number;
+  bool alive;
+} MARBLE;
 
-int standardBoard[60][60], tmpBoard[60][60];
-int standardX, standardY;
+int n, m;
+
+int standardBoard[60][60];
+
+vector<MARBLE> v;
 
 int numbers[4];
 
-void printArray(int arr[60][60]) {
-  for (int i = 1; i <= n; i++) {
-    for (int j = 1; j <= n; j++) {
-      cout << arr[i][j] << '\t';
-    }
-    cout << "\n\n";
-  }
-  cout << "====================\n";
-}
-
-void blizard(int dir, int dist) {
-  COORDINATE direction[4] = {
-    {-1, 0},
-    {1, 0},
-    {0, -1},
-    {0, 1},
-  };
-
-  int dx = direction[dir].x;
-  int dy = direction[dir].y;
-
-  int x = (n+1)/2;
-  int y = (n+1)/2;
-
-  for (int i = 1; i <= dist; i++) {
-    x += dx;
-    y += dy;
-
-    board[x][y] = 0;
-  }
-}
-
-void moveOnce() {
-  int x = (n+1)/2;
-  int y = (n+1)/2 - 1;
+void putBoardIntoVector(int board[60][60]) {
+  int x = (n + 1) / 2;
+  int y = (n + 1) / 2 - 1;
 
   int dir = 1;
 
   for (int len = 1; len <= n; len++) {
     for (int i = 0; i < len; i++) {
-      if (board[x][y] == 0) {
-        board[x][y] = board[x + dir][y];
-        board[x + dir][y] = 0;
-      }
+      v.push_back({board[x][y], true});
       x += dir;
     }
 
     for (int i = 0; i <= len; i++) {
-      if (board[x][y] == 0) {
-        board[x][y] = board[x][y + dir];
-        board[x][y + dir] = 0;
-
-      }
+      v.push_back({board[x][y], true});
       y += dir;
     }
 
     dir *= -1;
-  }
-}
-
-void move(int num) {
-  for (int i = 0; i < num; i++) moveOnce();
-}
-
-void initialize(int arr[60][60]) {
-  for (int i = 0; i <= n; i++) {
-    for (int j = 0; j <= n; j++) {
-      arr[i][j] = 0;
-    }
-  }
-}
-
-int reduce() {
-  int erase[60][60] = {0, };
-
-  int erasing = 0;
-  int cnt = 0;
-
-  int x = (n+1)/2;
-  int y = (n+1)/2 - 1;
-
-  int dir = 1;
-
-  int sum = 0;
-
-  for (int len = 1; len <= n; len++) {
-    for (int i = 0; i < len; i++) {
-      if (erasing == 0) {
-        erasing = board[x][y];
-        erase[x][y] = 1;
-        cnt++;
-      } else {
-        if (board[x][y] == erasing) {
-          cnt++;
-          erase[x][y] = 1;
-        } else {
-          if (cnt >= 4) {
-            for (int row = 1; row <= n; row++) {
-              for (int col = 1; col <= n; col++) {
-                if (erase[row][col]) {
-                  board[row][col] = 0;
-                }
-              }
-            }
-
-            numbers[erasing] += cnt;
-
-            sum += cnt;
-          }
-
-          if (board[x][y] == 0) return sum;
-
-          erasing = board[x][y];
-          initialize(erase);
-          erase[x][y] = 1;
-          cnt = 1;
-        }
-      }
-      x += dir;
-    }
-
-    for (int i = 0; i <= len; i++) {
-      if (erasing == 0) {
-        erasing = board[x][y];
-        erase[x][y] = 1;
-        cnt++;
-      } else {
-        if (board[x][y] == erasing) {
-          cnt++;
-          erase[x][y] = 1;
-        } else {
-          if (cnt >= 4) {
-            for (int row = 1; row <= n; row++) {
-              for (int col = 1; col <= n; col++) {
-                if (erase[row][col]) {
-                  board[row][col] = 0;
-                }
-              }
-            }
-
-            numbers[erasing] += cnt;
-
-            sum += cnt;
-          }
-
-          if (board[x][y] == 0) return sum;
-          
-          erasing = board[x][y];
-          initialize(erase);
-          erase[x][y] = 1;
-          cnt = 1;
-        }
-      }
-      y += dir;
-    }
-
-    dir *= -1;
-  }
-
-  return sum;
-}
-
-int getScore() {
-  return numbers[1] + 2 * numbers[2] + 3 * numbers[3];
-}
-
-void pushTmpBoard(int first, int second) {
-  if (standardX < 1 || standardX > n || standardY < 1 || standardY > n)
-    return;
-
-  // cout << "PUSH=> CNT: " << first << " NUM: " << second << '\n';
-
-  COORDINATE direction[4] = {
-    {0, 1},
-    {1, 0},
-    {0, -1},
-    {-1, 0},
-  };
-
-  tmpBoard[standardX][standardY] = first;
-  
-  for (int dir = 0; dir < 4; dir++) {
-    int dx = direction[dir].x;
-    int dy = direction[dir].y;
-    int nx = standardX + dx;
-    int ny = standardY + dy;
-
-    int cur = standardBoard[standardX][standardY];
-
-    if (nx >= 1 && nx <= n && ny >= 1 && ny <= n) {
-      if (standardBoard[nx][ny] == cur + 1) {
-        standardX = nx;
-        standardY = ny;
-        break;
-      }
-    }
-  }
-
-  tmpBoard[standardX][standardY] = second;
-  
-  for (int dir = 0; dir < 4; dir++) {
-    int dx = direction[dir].x;
-    int dy = direction[dir].y;
-    int nx = standardX + dx;
-    int ny = standardY + dy;
-
-    int cur = standardBoard[standardX][standardY];
-
-    if (nx >= 1 && nx <= n && ny >= 1 && ny <= n) {
-      if (standardBoard[nx][ny] == cur + 1) {
-        standardX = nx;
-        standardY = ny;
-        break;
-      }
-    }
-  }
-}
-
-void changeBall() {
-  initialize(tmpBoard);
-
-  standardX = (n + 1) / 2;
-  standardY = (n + 1) / 2 - 1;
-
-  int erasing = 0;
-  int cnt = 0;
-
-  int x = (n+1)/2;
-  int y = (n+1)/2 - 1;
-
-  int dir = 1;
-
-  bool end = false;
-
-  for (int len = 1; len <= n; len++) {
-    for (int i = 0; i < len; i++) {
-      if (board[x][y] == 0) {
-        end = true;
-        break;
-      }
-
-      if (erasing == 0) {
-        erasing = board[x][y];
-        cnt++;
-      } else {
-        if (board[x][y] == erasing) {
-          cnt++;
-        } else {
-          pushTmpBoard(cnt, erasing);
-
-          erasing = board[x][y];
-          cnt = 1;
-        }
-      }
-      x += dir;
-    }
-
-    if (end) break;
-
-    for (int i = 0; i <= len; i++) {
-      if (board[x][y] == 0) {
-        end = true;
-        break;
-      }
-
-      if (erasing == 0) {
-        erasing = board[x][y];
-        cnt++;
-      } else {
-        if (board[x][y] == erasing) {
-          cnt++;
-        } else {
-          pushTmpBoard(cnt, erasing);
-
-          erasing = board[x][y];
-          cnt = 1;
-        }
-      }
-      y += dir;
-    }
-
-    if (end) break;
-
-    dir *= -1;
-  }
-
-  pushTmpBoard(cnt, erasing);
-
-  for (int i = 1; i <= n; i++) {
-    for (int j = 1; j <= n; j++) {
-      board[i][j] = tmpBoard[i][j];
-    }
   }
 }
 
 void setStandardBoard() {
-  int num = n * n;
+  int num = n * n - 1;
 
   int i = 1, j = 1;
 
@@ -335,6 +68,129 @@ void setStandardBoard() {
   }
 }
 
+void deleteByStandardIndex(int index) {
+  int cnt = 0;
+
+  for (int i = 0; i < v.size(); i++) {
+    if (v[i].alive) cnt++;
+
+    if (cnt == index) {
+      v[i].alive = false;
+      break;
+    }
+  }
+}
+
+void blizard(int dir, int dist) {
+  COORDINATE direction[4] = {
+    {-1, 0},
+    {1, 0},
+    {0, -1},
+    {0, 1},
+  };
+
+  int x = (n + 1) / 2;
+  int y = (n + 1) / 2;
+
+  int dx = direction[dir].x;
+  int dy = direction[dir].y;
+
+  for (int len = 1; len <= dist; len++) {
+    x += dx;
+    y += dy;
+
+    deleteByStandardIndex(standardBoard[x][y]);
+  }
+}
+
+void deleteByVectorIndexAndCount(int index, int erasing, int erasingCnt) {
+  int cnt = 0;
+
+  for (; index >= 0; index--) {
+    if (cnt == erasingCnt) break;
+
+    if (v[index].alive && v[index].number == erasing) {
+      v[index].alive = false;
+      cnt++;
+    }
+  }
+}
+
+bool reduce() {
+  int cnt = 0;
+
+  bool did = false;
+
+  int erasing = 0;
+  int erasingCnt = 0;
+
+  for (int i = 0; i < v.size(); i++) {
+    if (cnt >= n * n) break;
+
+    if (v[i].alive) {
+      if (erasing == v[i].number) {
+        erasingCnt++;
+      } else {
+        if (erasingCnt >= 4) {
+          numbers[erasing] += erasingCnt;
+
+          did = true;
+
+          deleteByVectorIndexAndCount(i, erasing, erasingCnt);
+        }
+
+        erasing = v[i].number;
+        erasingCnt = 1;
+      }
+    }
+  }
+
+  if (erasingCnt >= 4) {
+    numbers[erasing] += erasingCnt;
+
+    did = true;
+
+    deleteByVectorIndexAndCount(v.size()-1, erasing, erasingCnt);
+  }
+
+  return did;
+}
+
+void changeBall() {
+  int groupNum = 0;
+  int groupCnt = 0;
+
+  for (int i = 0; i < v.size(); i++) {
+    if (!v[i].alive) continue;
+
+    if (groupNum == 0) {
+      groupNum = v[i].number;
+      groupCnt++;
+      v[i].alive = false;
+    }
+
+    if (groupNum == v[i].number) {
+      groupCnt++;
+      v[i].alive = false;
+    } else {
+      v.push_back({groupCnt, true});
+      v.push_back({groupNum, true});
+
+      groupNum = v[i].number;
+      v[i].alive = false;
+    }
+  }
+
+  if (groupCnt > 0) {
+    v.push_back({groupCnt, true});
+    v.push_back({groupNum, true});
+  }
+}
+
+int getScore() {
+  return 1 * numbers[1] + 2 * numbers[2] + 3 * numbers[3];
+}
+
 void solve() {
   setStandardBoard();
 
@@ -344,15 +200,7 @@ void solve() {
 
     blizard(direction-1, distance);
 
-    move(distance);
-
-    while(true) {
-      int reduceNum = reduce();
-
-      if (reduceNum == 0) break;
-
-      move(reduceNum);
-    }
+    while(reduce());
 
     changeBall();
   }
@@ -361,12 +209,16 @@ void solve() {
 }
 
 int run() {
+  int board[60][60];
+
   cin >> n >> m;
   for (int i = 1; i <= n; i++) {
     for (int j = 1; j <= n; j++) {
       cin >> board[i][j];
     }
   }
+
+  putBoardIntoVector(board);
 
   solve();
 
