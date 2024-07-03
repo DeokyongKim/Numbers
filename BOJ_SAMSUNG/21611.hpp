@@ -27,13 +27,15 @@ void putBoardIntoVector(int board[60][60]) {
 
   int dir = 1;
 
-  for (int len = 1; len <= n; len++) {
+  for (int len = 1; len < n; len++) {
     for (int i = 0; i < len; i++) {
+      if (board[x][y] == 0) return;
       v.push_back({board[x][y], true});
       x += dir;
     }
 
     for (int i = 0; i <= len; i++) {
+      if (board[x][y] == 0) return;
       v.push_back({board[x][y], true});
       y += dir;
     }
@@ -74,9 +76,8 @@ void deleteByStandardIndex(int index) {
   for (int i = 0; i < v.size(); i++) {
     if (v[i].alive) cnt++;
 
-    if (cnt == index) {
+    if (v[i].alive && cnt == index) {
       v[i].alive = false;
-      break;
     }
   }
 }
@@ -95,11 +96,15 @@ void blizard(int dir, int dist) {
   int dx = direction[dir].x;
   int dy = direction[dir].y;
 
+  int deleting = 0;
+
   for (int len = 1; len <= dist; len++) {
     x += dx;
     y += dy;
 
-    deleteByStandardIndex(standardBoard[x][y]);
+    deleteByStandardIndex(standardBoard[x][y] - deleting);
+
+    deleting++;
   }
 }
 
@@ -107,12 +112,12 @@ void deleteByVectorIndexAndCount(int index, int erasing, int erasingCnt) {
   int cnt = 0;
 
   for (; index >= 0; index--) {
-    if (cnt == erasingCnt) break;
-
     if (v[index].alive && v[index].number == erasing) {
       v[index].alive = false;
       cnt++;
     }
+
+    if (cnt == erasingCnt) break;
   }
 }
 
@@ -124,10 +129,26 @@ bool reduce() {
   int erasing = 0;
   int erasingCnt = 0;
 
-  for (int i = 0; i < v.size(); i++) {
-    if (cnt >= n * n) break;
+  int i = 0;
 
-    if (v[i].alive) {
+  for (; i < v.size(); i++) {
+    if (v[i].alive && v[i].number != 0) {
+      cnt++;
+
+      if (cnt >= n * n) {
+        if (erasingCnt >= 4) {
+          numbers[erasing] += erasingCnt;
+
+          did = true;
+
+          deleteByVectorIndexAndCount(i-1, erasing, erasingCnt);
+        }
+
+        erasingCnt = 0;
+
+        break;
+      }
+
       if (erasing == v[i].number) {
         erasingCnt++;
       } else {
@@ -145,7 +166,7 @@ bool reduce() {
     }
   }
 
-  if (erasingCnt >= 4) {
+  if (cnt < n * n && i == v.size() && erasing != 0 && erasingCnt >= 4) {
     numbers[erasing] += erasingCnt;
 
     did = true;
@@ -160,30 +181,41 @@ void changeBall() {
   int groupNum = 0;
   int groupCnt = 0;
 
-  for (int i = 0; i < v.size(); i++) {
-    if (!v[i].alive) continue;
+  int curSize = v.size();
+
+  int cnt = 0;
+
+  for (int i = 0; i < curSize; i++) {
+    if (!v[i].alive || v[i].number == 0) continue;
+
+    if (cnt >= n * n) {
+      v[i].alive = false;
+      continue;
+    }
 
     if (groupNum == 0) {
       groupNum = v[i].number;
       groupCnt++;
       v[i].alive = false;
-    }
-
-    if (groupNum == v[i].number) {
+    } else if (groupNum == v[i].number) {
       groupCnt++;
       v[i].alive = false;
     } else {
-      v.push_back({groupCnt, true});
-      v.push_back({groupNum, true});
+      if (cnt < n * n) v.push_back({groupCnt, true});
+      cnt++;
+      if (cnt < n * n) v.push_back({groupNum, true});
+      cnt++;
 
       groupNum = v[i].number;
+      groupCnt = 1;
       v[i].alive = false;
     }
   }
 
   if (groupCnt > 0) {
-    v.push_back({groupCnt, true});
-    v.push_back({groupNum, true});
+    if (cnt < n * n) v.push_back({groupCnt, true});
+    cnt++;
+    if (cnt < n * n) v.push_back({groupNum, true});
   }
 }
 
