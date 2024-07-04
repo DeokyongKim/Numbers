@@ -131,6 +131,8 @@ bool reduce() {
 
   int i = 0;
 
+  bool over = false;
+
   for (; i < v.size(); i++) {
     if (v[i].alive && v[i].number != 0) {
       cnt++;
@@ -142,6 +144,8 @@ bool reduce() {
           did = true;
 
           deleteByVectorIndexAndCount(i-1, erasing, erasingCnt);
+
+          over = true;
         }
 
         erasingCnt = 0;
@@ -151,7 +155,9 @@ bool reduce() {
 
       if (erasing == v[i].number) {
         erasingCnt++;
-      } else {
+      } 
+      
+      if (erasing != v[i].number) {
         if (erasingCnt >= 4) {
           numbers[erasing] += erasingCnt;
 
@@ -166,12 +172,28 @@ bool reduce() {
     }
   }
 
-  if (cnt < n * n && i == v.size() && erasing != 0 && erasingCnt >= 4) {
-    numbers[erasing] += erasingCnt;
+  if (!did) {
+    int isSame = 0;
+    int sameCnt = 0;
+    for (int i = 0; i < v.size(); i++) {
+      if (!v[i].alive) continue;
+      
+      if (isSame == 0) {
+        isSame = v[i].number;
+        sameCnt++;
+        continue;
+      }
 
-    did = true;
+      if (isSame != v[i].number) {
+        return false;
+      } 
 
-    deleteByVectorIndexAndCount(v.size()-1, erasing, erasingCnt);
+      if (isSame == v[i].number) sameCnt++;
+    }
+
+    deleteByVectorIndexAndCount(v.size() - 1, isSame, sameCnt);
+
+    numbers[isSame] += sameCnt;
   }
 
   return did;
