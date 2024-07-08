@@ -38,7 +38,7 @@ bool isSpreadableToRight(COORDINATE from, COORDINATE to) {
   for (int i = 0; i < walls.size(); i++) {
     if (from.x-1 == to.x && from.y+1 == to.y) {
       // x, y -> x-1, y+1
-      if (walls[i].x == from.x-1 && walls[i].y == from.y && walls[i].t == 0) {
+      if (walls[i].x == from.x && walls[i].y == from.y && walls[i].t == 0) {
         return false;
       }
       if (walls[i].x == from.x-1 && walls[i].y == from.y && walls[i].t == 1) {
@@ -51,7 +51,7 @@ bool isSpreadableToRight(COORDINATE from, COORDINATE to) {
       }
     } else if (from.x+1 == to.x && from.y+1 == to.y) {
       // x, y -> x+1, y+1
-      if (walls[i].x == from.x && walls[i].y == from.y && walls[i].t == 0) {
+      if (walls[i].x == from.x+1 && walls[i].y == from.y && walls[i].t == 0) {
         return false;
       }
       if (walls[i].x == from.x+1 && walls[i].y == from.y && walls[i].t == 1) {
@@ -67,7 +67,7 @@ bool isSpreadableToLeft(COORDINATE from, COORDINATE to) {
   for (int i = 0; i < walls.size(); i++) {
     if (from.x-1 == to.x && from.y-1 == to.y) {
       // x, y -> x-1, y-1
-      if (walls[i].x == from.x-1 && walls[i].y == from.y && walls[i].t == 0) {
+      if (walls[i].x == from.x && walls[i].y == from.y && walls[i].t == 0) {
         return false;
       }
       if (walls[i].x == from.x-1 && walls[i].y == from.y-1 && walls[i].t == 1) {
@@ -80,7 +80,7 @@ bool isSpreadableToLeft(COORDINATE from, COORDINATE to) {
       }
     } else if (from.x+1 == to.x && from.y-1 == to.y) {
       // x, y -> x+1, y-1
-      if (walls[i].x == from.x && walls[i].y == from.y && walls[i].t == 0) {
+      if (walls[i].x == from.x+1 && walls[i].y == from.y && walls[i].t == 0) {
         return false;
       }
       if (walls[i].x == from.x+1 && walls[i].y == from.y-1 && walls[i].t == 1) {
@@ -96,7 +96,7 @@ bool isSpreadableToUp(COORDINATE from, COORDINATE to) {
   for (int i = 0; i < walls.size(); i++) {
     if (from.x-1 == to.x && from.y-1 == to.y) {
       // x, y -> x-1, y-1
-      if (walls[i].x == from.x-1 && walls[i].y == from.y-1 && walls[i].t == 0) {
+      if (walls[i].x == from.x && walls[i].y == from.y-1 && walls[i].t == 0) {
         return false;
       }
       if (walls[i].x == from.x && walls[i].y == from.y-1 && walls[i].t == 1) {
@@ -104,12 +104,12 @@ bool isSpreadableToUp(COORDINATE from, COORDINATE to) {
       }
     } else if (from.x-1 == to.x && from.y == to.y) {
       // x, y -> x-1, y
-      if (walls[i].x == from.x-1 && walls[i].y == from.y && walls[i].t == 0) {
+      if (walls[i].x == from.x && walls[i].y == from.y && walls[i].t == 0) {
         return false;
       }
     } else if (from.x-1 == to.x && from.y+1 == to.y) {
       // x, y -> x-1, y+1
-      if (walls[i].x == from.x-1 && walls[i].y == from.y+1 && walls[i].t == 0) {
+      if (walls[i].x == from.x && walls[i].y == from.y+1 && walls[i].t == 0) {
         return false;
       }
       if (walls[i].x == from.x && walls[i].y == from.y && walls[i].t == 1) {
@@ -125,7 +125,7 @@ bool isSpreadableToDown(COORDINATE from, COORDINATE to) {
   for (int i = 0; i < walls.size(); i++) {
     if (from.x+1 == to.x && from.y-1 == to.y) {
       // x, y -> x+1, y-1
-      if (walls[i].x == from.x && walls[i].y == from.y-1 && walls[i].t == 0) {
+      if (walls[i].x == from.x+1 && walls[i].y == from.y-1 && walls[i].t == 0) {
         return false;
       }
       if (walls[i].x == from.x && walls[i].y == from.y-1 && walls[i].t == 1) {
@@ -133,7 +133,7 @@ bool isSpreadableToDown(COORDINATE from, COORDINATE to) {
       }
     } else if (from.x+1 == to.x && from.y == to.y) {
       // x, y -> x+1, y
-      if (walls[i].x == from.x && walls[i].y == from.y && walls[i].t == 0) {
+      if (walls[i].x == from.x+1 && walls[i].y == from.y && walls[i].t == 0) {
         return false;
       }
     } else if (from.x+1 == to.x && from.y+1 == to.y) {
@@ -141,7 +141,7 @@ bool isSpreadableToDown(COORDINATE from, COORDINATE to) {
       if (walls[i].x == from.x && walls[i].y == from.y && walls[i].t == 1) {
         return false;
       }
-      if (walls[i].x == from.x && walls[i].y == from.y+1 && walls[i].t == 0) {
+      if (walls[i].x == from.x+1 && walls[i].y == from.y+1 && walls[i].t == 0) {
         return false;
       }
     }
@@ -263,7 +263,7 @@ bool isAdjustable(COORDINATE a, COORDINATE b) {
       to = b;
     } else {
       from = b;
-      to = b;
+      to = a;
     }
   }
 
@@ -271,7 +271,7 @@ bool isAdjustable(COORDINATE a, COORDINATE b) {
     if (from.x == to.x) {
       if (walls[i].x == from.x && walls[i].y == from.y && walls[i].t == 1) return false;
     } else if (from.y == to.y) {
-      if (walls[i].x == from.x && walls[i].y == from.y && walls[i].t == 0) return false;
+      if (walls[i].x == to.x && walls[i].y == to.y && walls[i].t == 0) return false;
     }
   }
 
@@ -290,6 +290,8 @@ void adjustTemperature() {
 
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < m; j++) {
+      if (board[i][j] == 0) continue;
+      
       int sum = 0;
       
       for (int dir = 0; dir < 4; dir++) {
@@ -320,14 +322,28 @@ void adjustTemperature() {
 }
 
 void reduceTemperature() {
+  int visited[30][30] = {0, };
+  
   for (int i = 0; i < n; i++) {
-    if (board[i][0] > 0) board[i][0]--;
-    if (board[i][m-1] > 0) board[i][m-1]--;
+    if (!visited[i][0] && board[i][0] > 0) {
+      board[i][0]--;
+      visited[i][0] = 1;
+    }
+    if (!visited[i][m-1] && board[i][m-1] > 0) {
+      board[i][m-1]--;
+      visited[i][m-1] = 1;
+    }
   }
 
   for (int j = 0; j < m; j++) {
-    if (board[0][j] > 0) board[0][j]--;
-    if (board[n-1][j] > 0) board[n-1][j]--;
+    if (!visited[0][j] && board[0][j] > 0) {
+      board[0][j]--;
+      visited[0][j] = 1;
+    }
+    if (!visited[n-1][j] && board[n-1][j] > 0) {
+      board[n-1][j]--;
+      visited[n-1][j] = 1;
+    }
   }
 }
 
@@ -356,16 +372,12 @@ void solve() {
     }
 
     blowWind();             // 1
-    printBoard();
 
     adjustTemperature();    // 2 
-    printBoard();
 
     reduceTemperature();    // 3
 
     chocolateCnt++;         // 4
-
-    printBoard();
 
     if (isAllOverStandardTemperature()) {
       break;
