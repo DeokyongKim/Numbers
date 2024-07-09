@@ -82,7 +82,7 @@ void moveFishes() {
     
     if (tryCnt == 8) continue;
 
-    cout << curDir << '\n';
+    // cout << fishes[i].location.x << ' ' << fishes[i].location.y << " : " << curDir << '\n';
 
     int x = fishes[i].location.x;
     int y = fishes[i].location.y;
@@ -118,6 +118,15 @@ int getProperSharkDictionaryIndex() {
 
     bool unable = false;
     int sum = 0;
+
+    int tmpBoard[30][30];
+
+    for (int i = 1; i <= 4; i++) {
+      for (int j = 1; j <= 4; j++) {
+        tmpBoard[i][j] = board[i][j].fishNum;
+      }
+    }
+
     for (int dir = 0; dir < 3; dir++) {
       int dx = direction[dir].x;
       int dy = direction[dir].y;
@@ -130,11 +139,8 @@ int getProperSharkDictionaryIndex() {
         break;
       }
 
-      for (int i = 0; i < fishes.size(); i++) {
-        if (fishes[i].alive && fishes[i].location.x == tmpShark.x && fishes[i].location.y == tmpShark.y) {
-          sum++;
-        }
-      }
+      sum += tmpBoard[tmpShark.x][tmpShark.y];
+      tmpBoard[tmpShark.x][tmpShark.y] = 0;
     }
 
     if (!unable) {
@@ -162,12 +168,13 @@ void moveSharkByDictionaryIndex(int dicIdx) {
     shark.x += dx;
     shark.y += dy;
 
-    board[shark.x][shark.y].fishNum = 0;
-    board[shark.x][shark.y].smell = 2;
+    // cout << "MOVED: " << shark.x << ' ' << shark.y << '\n';
 
     for (int i = 0; i < fishes.size(); i++) {
       if (fishes[i].alive && fishes[i].location.x == shark.x && fishes[i].location.y == shark.y) {
         fishes[i].alive = false;
+        board[fishes[i].location.x][fishes[i].location.y].fishNum = 0;
+        board[fishes[i].location.x][fishes[i].location.y].smell = 3;
       }
     }
   }
@@ -229,6 +236,16 @@ void printBoard() {
   cout << '\n';
 }
 
+void printSmell() {
+  for (int i = 1; i <= 4; i++) {
+    for (int j = 1; j <= 4; j++) {
+      cout << board[i][j].smell << ' ';
+    }
+    cout << '\n';
+  }
+  cout << '\n';
+}
+
 void solve() {
   setSharkMoveDictionary();
 
@@ -243,13 +260,18 @@ void solve() {
 
     moveFishes();
 
-    printBoard();
+    // printBoard();
 
     moveShark();
+    // cout << "shark: " << shark.x << ' ' << shark.y << '\n';
 
-    printBoard();
+    // printBoard();
 
+    // cout << "BEFORE SMELL:\n";
+    // printSmell();
     removeSmell();
+    // cout << "AFTER SMELL:\n";
+    // printSmell();
 
     // put replica
     for (int i = 0; i < tmpFishes.size(); i++) {
@@ -257,7 +279,7 @@ void solve() {
       board[tmpFishes[i].location.x][tmpFishes[i].location.y].fishNum++;
     }
 
-    printBoard();
+    // printBoard();
   }
 
   cout << getTotalFishCount() << '\n';
@@ -275,7 +297,7 @@ int run() {
 
   cin >> shark.x >> shark.y;
 
-  printBoard();
+  // printBoard();
 
   solve();
 
