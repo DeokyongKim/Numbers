@@ -5,7 +5,7 @@
 </p>
 
 ---
-### Programming Problem Solving
+### Algorithm Problem Solving
 
 
 
