@@ -27,6 +27,8 @@ vector<FISH> fishes;
 
 COORDINATE shark;
 
+COORDINATE sharkMoveDictionary[64][3];
+
 bool isAbleToMoveFish(FISH fish) {
   int dir = fish.dir;
   int x = fish.location.x;
@@ -93,8 +95,16 @@ void moveFishes() {
   }
 }
 
-void moveShark() {
+int getProperSharkDictionaryIndex() {
+  int maxIdx = 0, max = 0;
 
+  for (int dicIdx = 0; dicIdx < 64; dicIdx++) {
+    
+  }
+}
+
+void moveShark() {
+  int properSharkDictionaryIndex = getProperSharkDictionaryIndex();
 }
 
 void removeSmell() {
@@ -105,7 +115,31 @@ void removeSmell() {
   }
 }
 
+void setSharkMoveDictionary() {
+  int cnt = 0;
+
+  COORDINATE direction[4] = {
+    {-1, 0},
+    {0, 1},
+    {1, 0},
+    {0, -1},
+  };
+
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 4; j++) {
+      for (int k = 0; k < 4; k++) {
+        sharkMoveDictionary[cnt][0] = direction[i];
+        sharkMoveDictionary[cnt][1] = direction[j];
+        sharkMoveDictionary[cnt][2] = direction[k];
+        cnt++;
+      }
+    }
+  }
+}
+
 void solve() {
+  setSharkMoveDictionary();
+
   for (int i = 0; i < magicNum; i++) {
     // for duplication
     vector<FISH> tmpFishes;
