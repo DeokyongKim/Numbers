@@ -8,298 +8,210 @@ typedef struct _COORDINATE {
   int y;
 } COORDINATE;
 
-typedef struct _FISH {
-  COORDINATE location;
-  int dir;
-  bool alive;
-} FISH;
-
-typedef struct _BOARD {
-  int fishNum;
-  int smell;
-} BOARD;
-
 int fishNum, magicNum;
 
-BOARD board[5][5];
+vector<int> board[5][5];
 
-vector<FISH> fishes;
+COORDINATE sharkDirectionDictionary[70][3];
 
 COORDINATE shark;
 
-COORDINATE sharkMoveDictionary[64][3];
+int level = 1;
 
-bool isAbleToMoveFish(FISH fish) {
-  int dir = fish.dir;
-  int x = fish.location.x;
-  int y = fish.location.y;
+int smell[5][5];
 
-  COORDINATE direction[8] = {
-    {0, -1},
-    {-1, -1},
-    {-1, 0},
-    {-1, 1},
-    {0, 1},
-    {1, 1},
-    {1, 0},
-    {1, -1},
-  };
-
-  int dx = direction[dir].x;
-  int dy = direction[dir].y;
-
-  int nx = x + dx;
-  int ny = y + dy;
-
-  if (nx <= 0 || nx > 4 || ny <= 0 || ny > 4) return false;
-  if (shark.x == nx && shark.y == ny) return false;
-  if (board[nx][ny].smell > 0) return false;
-
-  return true;
-}
-
-void moveFishes() {
-  COORDINATE direction[8] = {
-    {0, -1},
-    {-1, -1},
-    {-1, 0},
-    {-1, 1},
-    {0, 1},
-    {1, 1},
-    {1, 0},
-    {1, -1},
-  };
-
-  int curFishSize = fishes.size();
-  
-  for (int i = 0; i < curFishSize; i++) {
-    int tryCnt = 0;
-    int curDir = fishes[i].dir;
-
-    if (!fishes[i].alive) continue;
-
-    for(; !isAbleToMoveFish({fishes[i].location, curDir, fishes[i].alive}) && tryCnt < 8; curDir = (curDir - 1 + 8) % 8, tryCnt++);
-    
-    if (tryCnt == 8) continue;
-
-    // cout << fishes[i].location.x << ' ' << fishes[i].location.y << " : " << curDir << '\n';
-
-    int x = fishes[i].location.x;
-    int y = fishes[i].location.y;
-    int dir = curDir;
-    fishes[i].dir = dir;
-
-    int dx = direction[dir].x;
-    int dy = direction[dir].y;
-
-    int nx = x + dx;
-    int ny = y + dy;
-
-    board[x][y].fishNum--;
-    board[nx][ny].fishNum++;
-
-    fishes[i].alive = false;
-
-    fishes.push_back({{nx, ny}, dir, true});
-  }
-}
-
-int getProperSharkDictionaryIndex() {
-  int maxIdx = 0, max = -1;
-
-  for (int dicIdx = 0; dicIdx < 64; dicIdx++) {
-    COORDINATE direction[3] = {
-      sharkMoveDictionary[dicIdx][0],
-      sharkMoveDictionary[dicIdx][1],
-      sharkMoveDictionary[dicIdx][2],
-    };
-
-    COORDINATE tmpShark = shark;
-
-    bool unable = false;
-    int sum = 0;
-
-    int tmpBoard[30][30];
-
-    for (int i = 1; i <= 4; i++) {
-      for (int j = 1; j <= 4; j++) {
-        tmpBoard[i][j] = board[i][j].fishNum;
-      }
-    }
-
-    for (int dir = 0; dir < 3; dir++) {
-      int dx = direction[dir].x;
-      int dy = direction[dir].y;
-
-      tmpShark.x += dx;
-      tmpShark.y += dy;
-
-      if (tmpShark.x <= 0 || tmpShark.x > 4 || tmpShark.y <= 0 || tmpShark.y > 4) {
-        unable = true;
-        break;
-      }
-
-      sum += tmpBoard[tmpShark.x][tmpShark.y];
-      tmpBoard[tmpShark.x][tmpShark.y] = 0;
-    }
-
-    if (!unable) {
-      if (max < sum) {
-        max = sum;
-        maxIdx = dicIdx;
-      }
-    }
-  }
-
-  return maxIdx;
-}
-
-void moveSharkByDictionaryIndex(int dicIdx) {
-  COORDINATE direction[3] = {
-      sharkMoveDictionary[dicIdx][0],
-      sharkMoveDictionary[dicIdx][1],
-      sharkMoveDictionary[dicIdx][2],
-    };
-
-  for (int dir = 0; dir < 3; dir++) {
-    int dx = direction[dir].x;
-    int dy = direction[dir].y;
-
-    shark.x += dx;
-    shark.y += dy;
-
-    // cout << "MOVED: " << shark.x << ' ' << shark.y << '\n';
-
-    for (int i = 0; i < fishes.size(); i++) {
-      if (fishes[i].alive && fishes[i].location.x == shark.x && fishes[i].location.y == shark.y) {
-        fishes[i].alive = false;
-        board[fishes[i].location.x][fishes[i].location.y].fishNum = 0;
-        board[fishes[i].location.x][fishes[i].location.y].smell = 3;
-      }
-    }
-  }
-}
-
-void moveShark() {
-  int properSharkDictionaryIndex = getProperSharkDictionaryIndex();
-
-  moveSharkByDictionaryIndex(properSharkDictionaryIndex);
-}
-
-void removeSmell() {
-  for (int i = 1; i <= 4; i++) {
-    for (int j = 1; j <= 4; j++) {
-      if (board[i][j].smell > 0) board[i][j].smell--;
-    }
-  }
-}
-
-void setSharkMoveDictionary() {
+void setSharkDirectionDictionary() {
   int cnt = 0;
 
   COORDINATE direction[4] = {
     {-1, 0},
-    {0, 1},
-    {1, 0},
     {0, -1},
+    {1, 0},
+    {0, 1},
   };
 
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
       for (int k = 0; k < 4; k++) {
-        sharkMoveDictionary[cnt][0] = direction[i];
-        sharkMoveDictionary[cnt][1] = direction[j];
-        sharkMoveDictionary[cnt][2] = direction[k];
-        cnt++;
+        sharkDirectionDictionary[cnt][0] = direction[i];
+        sharkDirectionDictionary[cnt][1] = direction[j];
+        sharkDirectionDictionary[cnt][2] = direction[k];
       }
     }
   }
 }
 
-int getTotalFishCount() {
+int getLeftFishNum() {
+  int fishLeftCnt = 0;
+  
+  for (int i = 1; i <= 4; i++) {
+    for (int j = 1; j <= 4; j++) {
+      fishLeftCnt += board[i][j].size();
+    }
+  }
+
+  return fishLeftCnt;
+}
+
+int_least32_t getProperDirection(COORDINATE cur, int dir) {
   int cnt = 0;
+  
+  COORDINATE direction[8] = {
+    {0, -1},
+    {-1 ,-1},
+    {-1, 0},
+    {-1, 1},
+    {0, 1},
+    {1, 1},
+    {1, 0},
+    {1, -1},
+  };
 
-  for (int i = 0; i < fishes.size(); i++) {
-    if (fishes[i].alive) cnt++;
-  }
+  while(true) {
+    cnt++;
 
-  return cnt;
-}
+    if (cnt == 9) break;
 
-void printBoard() {
-  for (int i = 1; i <= 4; i++) {
-    for (int j = 1; j <= 4; j++) {
-      cout << board[i][j].fishNum << ' ';
+    int nx = cur.x + direction[dir].x;
+    int ny = cur.y + direction[dir].y;
+
+    if (nx < 1 || nx > 4 || ny < 1 || ny > 4) {
+      dir = (dir - 1 + 8) % 8;
+      continue;
     }
-    cout << '\n';
-  }
-  cout << '\n';
-}
 
-void printSmell() {
-  for (int i = 1; i <= 4; i++) {
-    for (int j = 1; j <= 4; j++) {
-      cout << board[i][j].smell << ' ';
+    if (shark.x == nx && shark.y == ny) {
+      dir = (dir - 1 + 8) % 8;
+      continue;
     }
-    cout << '\n';
+
+    if (smell[nx][ny] > 0) {
+      dir = (dir - 1 + 8) % 8;
+      continue;
+    }
+
+    return dir;
   }
-  cout << '\n';
+
+  return -1;
 }
 
 void solve() {
-  setSharkMoveDictionary();
+  setSharkDirectionDictionary();
 
-  for (int i = 0; i < magicNum; i++) {
-    // for duplication
-    vector<FISH> tmpFishes;
+  COORDINATE fishDirection[8] = {
+    {0, -1},
+    {-1 ,-1},
+    {-1, 0},
+    {-1, 1},
+    {0, 1},
+    {1, 1},
+    {1, 0},
+    {1, -1},
+  };
 
-    // make replica
-    for (int i = 0; i < fishes.size(); i++) {
-      if (fishes[i].alive) tmpFishes.push_back(fishes[i]);
+  for (int magicCnt = 0; magicCnt < magicNum; magicCnt++) {
+    vector<int> tmpFishes[5][5];
+
+    // move fishes
+    for (int i = 1; i <= 4; i++) {
+      for (int j = 1; j <= 4; j++) {
+        for (int k = 0; k < board[i][j].size(); k++) {          
+          int properDirection = getProperDirection({i, j}, board[i][j][k]);
+        
+          if (properDirection == -1) {
+            tmpFishes[i][j].push_back(board[i][j][k]);
+          } else {
+            int nx = i + fishDirection[properDirection].x;
+            int ny = j + fishDirection[properDirection].y;
+
+            tmpFishes[nx][ny].push_back(properDirection);
+          }
+        }
+      }
     }
 
-    moveFishes();
+    // move shark
+    int maxFish = 0, maxIdx = 0;
 
-    // printBoard();
+    for (int dicIdx = 0; dicIdx < 64; dicIdx++) {
+      int partialSum = 0;
+      COORDINATE tmpShark = {shark.x, shark.y};
 
-    moveShark();
-    // cout << "shark: " << shark.x << ' ' << shark.y << '\n';
+      bool able = true;
 
-    // printBoard();
+      int visited[5][5] = {0, };
 
-    // cout << "BEFORE SMELL:\n";
-    // printSmell();
-    removeSmell();
-    // cout << "AFTER SMELL:\n";
-    // printSmell();
+      for (int i = 0; i < 3; i++) {
+        tmpShark.x += sharkDirectionDictionary[dicIdx][i].x;
+        tmpShark.y += sharkDirectionDictionary[dicIdx][i].y;
 
-    // put replica
-    for (int i = 0; i < tmpFishes.size(); i++) {
-      fishes.push_back(tmpFishes[i]);
-      board[tmpFishes[i].location.x][tmpFishes[i].location.y].fishNum++;
+        if (tmpShark.x < 1 || tmpShark.x > 4 || tmpShark.y < 1 || tmpShark.y > 4) {
+          able = false;
+          break;
+        }
+
+        if (!visited[tmpShark.x][tmpShark.y]) {
+          partialSum += tmpFishes[tmpShark.x][tmpShark.y].size();
+
+          visited[tmpShark.x][tmpShark.y] = 1;
+        }
+      }
+
+      if (!able) {
+        continue;
+      } else {
+        if (partialSum > maxFish) {
+          maxFish = partialSum;
+          maxIdx = dicIdx;
+        }
+      }
     }
 
-    // printBoard();
+    for (int i = 0; i < 3; i++) {
+      shark.x += sharkDirectionDictionary[maxIdx][i].x;
+      shark.y += sharkDirectionDictionary[maxIdx][i].y;
+
+      if (tmpFishes[shark.x][shark.y].size() > 0) {
+        smell[shark.x][shark.y] = level;
+      }
+
+      tmpFishes[shark.x][shark.y].clear();
+    }
+
+    // remove smell
+    for (int i = 1; i <= 4; i++) {
+      for (int j = 1; j <= 4; j++) {
+        if (smell[i][j] == level - 2) smell[i][j] = 0;
+      }
+    }
+
+    // paste
+    for (int i = 1; i <= 4; i++) {
+      for (int j = 1; j <= 4; j++) {
+        for (int k = 0; k < tmpFishes[i][j].size(); k++) {
+          board[i][j].push_back(tmpFishes[i][j][k]);
+        }
+      }
+    }
+
+    level++;
   }
 
-  cout << getTotalFishCount() << '\n';
+  cout << getLeftFishNum() << '\n';
 }
 
 int run() {
   cin >> fishNum >> magicNum;
 
   for (int i = 0; i < fishNum; i++) {
-    FISH tmpFish;
-    cin >> tmpFish.location.x >> tmpFish.location.y >> tmpFish.dir;
-    fishes.push_back({tmpFish.location, tmpFish.dir-1, true});
-    board[tmpFish.location.x][tmpFish.location.y].fishNum++;
+    int fx, fy, fishDir;
+    cin >> fx >> fy >> fishDir;
+
+    board[fx][fy].push_back(fishDir-1);
   }
 
   cin >> shark.x >> shark.y;
 
-  // printBoard();
-
   solve();
-
-  return 0;
 }
