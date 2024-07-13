@@ -214,4 +214,6 @@ int run() {
   cin >> shark.x >> shark.y;
 
   solve();
+
+  return 0;
 }
