@@ -36,6 +36,7 @@ void setSharkDirectionDictionary() {
         sharkDirectionDictionary[cnt][0] = direction[i];
         sharkDirectionDictionary[cnt][1] = direction[j];
         sharkDirectionDictionary[cnt][2] = direction[k];
+        cnt++;
       }
     }
   }
@@ -96,6 +97,16 @@ int_least32_t getProperDirection(COORDINATE cur, int dir) {
   return -1;
 }
 
+void printArrayNum(vector<int> array[5][5]) {
+  for (int i = 1; i <= 4; i++) {
+    for (int j = 1; j <= 4; j++) {
+      cout << array[i][j].size() << '\t';
+    }
+    cout << '\n';
+  }
+  cout << '\n';
+}
+
 void solve() {
   setSharkDirectionDictionary();
 
@@ -111,7 +122,11 @@ void solve() {
   };
 
   for (int magicCnt = 0; magicCnt < magicNum; magicCnt++) {
+    
     vector<int> tmpFishes[5][5];
+
+    // cout << "LEVEL: " << level << '\n';
+    // printArrayNum(board);
 
     // move fishes
     for (int i = 1; i <= 4; i++) {
@@ -130,9 +145,10 @@ void solve() {
         }
       }
     }
+    // printArrayNum(tmpFishes);
 
     // move shark
-    int maxFish = 0, maxIdx = 0;
+    int maxFish = -10, maxIdx = 0;
 
     for (int dicIdx = 0; dicIdx < 64; dicIdx++) {
       int partialSum = 0;
@@ -164,6 +180,8 @@ void solve() {
         if (partialSum > maxFish) {
           maxFish = partialSum;
           maxIdx = dicIdx;
+
+          // cout << "NEW MAX: " << maxIdx << '\n';
         }
       }
     }
@@ -172,12 +190,16 @@ void solve() {
       shark.x += sharkDirectionDictionary[maxIdx][i].x;
       shark.y += sharkDirectionDictionary[maxIdx][i].y;
 
+      // cout << "DIR: " << sharkDirectionDictionary[maxIdx][i].x << ' ' << sharkDirectionDictionary[maxIdx][i].y << '\n';
+      // cout << "NOW: " << shark.x << ' ' << shark.y << '\n';
+
       if (tmpFishes[shark.x][shark.y].size() > 0) {
         smell[shark.x][shark.y] = level;
       }
 
       tmpFishes[shark.x][shark.y].clear();
     }
+    // printArrayNum(tmpFishes);
 
     // remove smell
     for (int i = 1; i <= 4; i++) {
@@ -194,6 +216,7 @@ void solve() {
         }
       }
     }
+    // printArrayNum(board);
 
     level++;
   }
