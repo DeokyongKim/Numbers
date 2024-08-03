@@ -1,4 +1,4 @@
-#include "./BOJ_SAMSUNG/23291.hpp"
+#include "./CODETREE_SAMSUNG/war-finish.hpp"
 #include <time.h>
 
 int main() {
