@@ -8,7 +8,8 @@
     "array": "cpp",
     "string_view": "cpp",
     "initializer_list": "cpp",
-    "utility": "cpp"
+    "utility": "cpp",
+    "type_traits": "cpp"
   },
   "C_Cpp.errorSquiggles": "disabled",
   "editor.codeActionWidget.includeNearbyQuickFixes": false,
