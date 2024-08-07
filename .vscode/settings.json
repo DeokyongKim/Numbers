@@ -9,7 +9,8 @@
     "string_view": "cpp",
     "initializer_list": "cpp",
     "utility": "cpp",
-    "type_traits": "cpp"
+    "type_traits": "cpp",
+    "queue": "cpp"
   },
   "C_Cpp.errorSquiggles": "disabled",
   "editor.codeActionWidget.includeNearbyQuickFixes": false,
