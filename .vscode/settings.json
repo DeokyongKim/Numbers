@@ -10,7 +10,9 @@
     "initializer_list": "cpp",
     "utility": "cpp",
     "type_traits": "cpp",
-    "queue": "cpp"
+    "queue": "cpp",
+    "*.tcc": "cpp",
+    "unordered_map": "cpp"
   },
   "C_Cpp.errorSquiggles": "disabled",
   "editor.codeActionWidget.includeNearbyQuickFixes": false,
