@@ -9,17 +9,18 @@ typedef struct _GUEST {
   int amount;
   string name;
   int index;
+  int enterTime;
 } GUEST;
 
 int beltLength, orderNum;
 
-map<string, vector<int> > list;
+map<string, vector<pair<int, int> > > list;
 vector<GUEST> guests;
 
 int startPoint = 0, guestNum = 0, sushiNum = 0;
 
-int getRightSushiIndex(int index) {
-  return (index + startPoint) % beltLength;
+int getRightSushiIndex(pair<int, int> sushi, int t) {
+  return (sushi.first + (t - sushi.second)) % beltLength;
 }
 
 void printSushies() {
@@ -30,15 +31,14 @@ void printSushies() {
     string name = id -> first;
     cout << name << " : ";
     for (int i = 0; i < list[name].size(); i++) {
-      cout << getRightSushiIndex(getRightSushiIndex(list[name][i])) << ", ";
+      cout << getRightSushiIndex(list[name][i], startPoint) << ", ";
       totalSushi++;
     }
     cout << '\n';
   }
   cout << '\n';
 
-  cout << "COUNTED: " << totalSushi << '\n';
-  cout << "CALCULATED: " << sushiNum << '\n';
+  if (totalSushi != sushiNum) cout << "PROBLEM!!!!!!!!!!!!!!!!!!!!!\n";
 }
 
 void printGuests() {
@@ -51,19 +51,19 @@ void printGuests() {
   }
   cout << '\n';
 
-  cout << "COUNTED: " << totalGuest << '\n';
-  cout << "CALCULATED: " << guestNum << '\n';
+  if (totalGuest != guestNum) cout << "PROBLEM!!!!!!!!!!!!!!!!!!!!!\n";
 }
 
 void eatSushi(int past, int now, int id) {
-  int from = (guests[id].index + past) % beltLength;
-  int to = (guests[id].index + now) % beltLength;
+  int to = (guests[id].index) % beltLength;
+  int from = (guests[id].index - (now - past) + beltLength) % beltLength;
 
   string name = guests[id].name;
 
-  if (from > to) {
+  if (from <= to) {
     for (int i = list[name].size() - 1; i >= 0; i--) {
-      if (getRightSushiIndex(list[name][i]) >= to && getRightSushiIndex(list[name][i]) <= from) {
+      if (getRightSushiIndex(list[name][i], past) >= from && getRightSushiIndex(list[name][i], past) <= to) {
+        cout << guests[id].name << " EAT " << getRightSushiIndex(list[name][i], past) << '\n';
         list[name].erase(list[name].begin() + i);
         sushiNum--;
         guests[id].amount--;
@@ -74,9 +74,10 @@ void eatSushi(int past, int now, int id) {
         }
       }
     }
-  } else if (to > from) {
+  } else if (to < from) {
     for (int i = list[name].size() - 1; i >= 0; i--) {
-      if (getRightSushiIndex(list[name][i]) >= 0 && getRightSushiIndex(list[name][i]) <= from && getRightSushiIndex(list[name][i]) < beltLength && getRightSushiIndex(list[name][i]) >= to) {
+      if ((getRightSushiIndex(list[name][i], past) >= 0 && getRightSushiIndex(list[name][i], past) <= to) || (getRightSushiIndex(list[name][i], past) < beltLength && getRightSushiIndex(list[name][i], past) >= from)) {
+        cout << guests[id].name << " ATE " << getRightSushiIndex(list[name][i], past) << '\n';
         list[name].erase(list[name].begin() + i);
         sushiNum--;
         guests[id].amount--;
@@ -93,12 +94,12 @@ void eatSushi(int past, int now, int id) {
 void setStartPoint(int t) {
   int past = startPoint;
 
-  startPoint = (beltLength - (t % beltLength)) % beltLength;
+  startPoint = t;
 
   int now = startPoint;
 
   for (int i = 0; i < guests.size(); i++) {
-    eatSushi(past, now, i);
+    eatSushi(past+1, now, i);
   }
 }
 
@@ -110,9 +111,13 @@ void serveSushi() {
 
   setStartPoint(t);
 
-  list[name].push_back(x);
+  list[name].push_back({x, t});
 
   sushiNum++;
+
+  for (int i = 0; i < guests.size(); i++) {
+    eatSushi(t, t, i);
+  }
 }
 
 void takeSushi() {
@@ -123,7 +128,7 @@ void takeSushi() {
 
   setStartPoint(t);
 
-  guests.push_back({n, name, x});
+  guests.push_back({n, name, x, t});
 
   eatSushi(t, t, guests.size() - 1);
   
