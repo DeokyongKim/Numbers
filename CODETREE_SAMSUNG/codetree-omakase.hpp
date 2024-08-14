@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <algorithm>
 
 using namespace std;
 
@@ -12,14 +13,23 @@ typedef struct _GUEST {
   int enterTime;
 } GUEST;
 
+typedef struct _ORDER {
+  int category = -1;
+  int t = -1;
+  int x = -1;
+  string name;
+  int n = -1;
+} ORDER;
+
 int beltLength, orderNum;
 
 map<string, vector<pair<int, int> > > list;
 vector<GUEST> guests;
+vector<ORDER> orders;
 
-int startPoint = 0, guestNum = 0, sushiNum = 0;
+int curTime = 0, guestNum = 0, sushiNum = 0;
 
-int getRightSushiIndex(pair<int, int> sushi, int t) {
+int getCurrentSushiPosition(pair<int, int> sushi, int t) {
   return (sushi.first + (t - sushi.second)) % beltLength;
 }
 
@@ -31,7 +41,7 @@ void printSushies() {
     string name = id -> first;
     cout << name << " : ";
     for (int i = 0; i < list[name].size(); i++) {
-      cout << getRightSushiIndex(list[name][i], startPoint) << ", ";
+      cout << getCurrentSushiPosition(list[name][i], curTime) << ", ";
       totalSushi++;
     }
     cout << '\n';
@@ -54,94 +64,103 @@ void printGuests() {
   if (totalGuest != guestNum) cout << "PROBLEM!!!!!!!!!!!!!!!!!!!!!\n";
 }
 
-void eatSushi(int past, int now, int id) {
-  int to = (guests[id].index) % beltLength;
-  int from = (guests[id].index - (now - past) + beltLength) % beltLength;
-
-  string name = guests[id].name;
-
-  if (from <= to) {
-    for (int i = list[name].size() - 1; i >= 0; i--) {
-      if (getRightSushiIndex(list[name][i], past) >= from && getRightSushiIndex(list[name][i], past) <= to) {
-        cout << guests[id].name << " EAT " << getRightSushiIndex(list[name][i], past) << '\n';
-        list[name].erase(list[name].begin() + i);
-        sushiNum--;
-        guests[id].amount--;
-        if (guests[id].amount == 0) {
-          guestNum--;
-          guests.erase(guests.begin() +id);
-          break;
-        }
-      }
-    }
-  } else if (to < from) {
-    for (int i = list[name].size() - 1; i >= 0; i--) {
-      if ((getRightSushiIndex(list[name][i], past) >= 0 && getRightSushiIndex(list[name][i], past) <= to) || (getRightSushiIndex(list[name][i], past) < beltLength && getRightSushiIndex(list[name][i], past) >= from)) {
-        cout << guests[id].name << " ATE " << getRightSushiIndex(list[name][i], past) << '\n';
-        list[name].erase(list[name].begin() + i);
-        sushiNum--;
-        guests[id].amount--;
-        if (guests[id].amount == 0) {
-          guestNum--;
-          guests.erase(guests.begin() +id);
-          break;
-        }
-      }
-    }
+bool isSushiInRange(int sushiIndex, int start, int end) {
+  
+  if (start <= end) {
+    if (start <= sushiIndex && end >= sushiIndex) return true;
+    return false;
+  } else {
+    if (start <= sushiIndex || end >= sushiIndex) return true;
+    return false;
   }
 }
 
-void setStartPoint(int t) {
-  int past = startPoint;
+void eatSushi(int guestId, int from, int to) {
+  string guestName = guests[guestId].name;
 
-  startPoint = t;
+  // cout << guestName << " EATS SUSHI FROM " << from << " to " << to << '\n';
 
-  int now = startPoint;
+  for (int i = list[guestName].size()-1; i >= 0; i--) {
+    if (isSushiInRange(getCurrentSushiPosition(list[guestName][i], curTime), to, from)) {
+      list[guestName].erase(list[guestName].begin() + i);
+      sushiNum--;
+      guests[guestId].amount--;
+
+      if (guests[guestId].amount == 0) {
+        guests.erase(guests.begin() + guestId);
+        guestNum--;
+        break;
+      }
+    }
+  }
+
+  if (list[guestName].size() == 0) list.erase(guestName);
+}
+
+void rotateTable(int nextTime) {
+  int timeGap = nextTime - curTime;
 
   for (int i = 0; i < guests.size(); i++) {
-    eatSushi(past+1, now, i);
+    eatSushi(
+      i, 
+      (guests[i].index - 1 + beltLength) % beltLength, 
+      timeGap >= beltLength ? guests[i].index : ((guests[i].index - timeGap + beltLength) % beltLength)
+    );
   }
+
+  curTime = nextTime;
 }
 
-void serveSushi() {
-  int t, x;
-  string name;
+void serveSushi(int orderIdx) {
+  ORDER cur = orders[orderIdx];
 
-  cin >> t >> x >> name;
+  int t = cur.t, x = cur.x;
+  string name = cur.name;
 
-  setStartPoint(t);
+  rotateTable(t);
 
   list[name].push_back({x, t});
 
   sushiNum++;
 
   for (int i = 0; i < guests.size(); i++) {
-    eatSushi(t, t, i);
+    eatSushi(i, guests[i].index, guests[i].index);
   }
 }
 
-void takeSushi() {
-  int t, x, n;
-  string name;
+void takeSushi(int orderIdx) {
+  ORDER cur = orders[orderIdx];
 
-  cin >> t >> x >> name >> n;
+  int t = cur.t, x = cur.x, n = cur.n;
+  string name = cur.name;
 
-  setStartPoint(t);
+  rotateTable(t);
 
   guests.push_back({n, name, x, t});
 
-  eatSushi(t, t, guests.size() - 1);
+  int newGuestIndex = guests.size() - 1;
+
+  eatSushi(newGuestIndex, x, x);
   
   guestNum++;
 }
 
-void takePhoto() {
-  int t;
-  cin >> t;
+void takePhoto(int orderIdx) {
+  ORDER cur = orders[orderIdx];
 
-  setStartPoint(t);
+  int t = cur.t;
+
+  rotateTable(t);
 
   cout << guestNum << ' ' << sushiNum << '\n';
+}
+
+bool compare(ORDER a, ORDER b) {
+  if (a.t == b.t) {
+    a.category < b.category;
+  } else {
+    return a.t < b.t;
+  }
 }
 
 void getOrder() {
@@ -149,14 +168,23 @@ void getOrder() {
 
   cin >> order;
 
-  if (order == 100) serveSushi();
-  if (order == 200) takeSushi();
-  if (order == 300) takePhoto();
+  int t, x, n;
+  string name;
 
-  printSushies();
-  printGuests();
+  if (order == 100) {
+    cin >> t >> x >> name;
+    orders.push_back({order, t, x, name, -1});
+  }
+  if (order == 200) {
+    cin >> t >> x >> name >> n;
+    orders.push_back({order, t, x, name, n});
+  }
+  if (order == 300) {
+    cin >> t;
+    orders.push_back({order, t, -1, "emtpy", -1});
+  }
 
-  cout << "++++++++++++++++++++++++++++++++++++++++\n";
+  sort(orders.begin(), orders.end(), compare);
 }
 
 void getInput() {
@@ -165,10 +193,24 @@ void getInput() {
   }
 }
 
+void executeOrder(int orderIdx) {
+  if (orders[orderIdx].category == 100) serveSushi(orderIdx);
+  if (orders[orderIdx].category == 200) takeSushi(orderIdx);
+  if (orders[orderIdx].category == 300) takePhoto(orderIdx);
+}
+
+void executeOrders() {
+  for (int i = 0; i < orderNum; i++) {
+    executeOrder(i);
+  }
+}
+
 int run() {
   cin >> beltLength >> orderNum;
 
   getInput();
+
+  executeOrders();
 
   return 0;
 }
