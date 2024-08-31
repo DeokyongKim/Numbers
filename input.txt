@@ -1,11 +1,14 @@
-5 10
-300 153203234
-300 221830051
-100 247165112 3 yujcozcvujlltsdklzsgdbcgkzhzoe
-100 327144628 3 yujcozcvujlltsdklzsgdbcgkzhzoe
-100 421492770 1 cabirrvyewdjalzbbbjhalxagdovek
-200 425223136 4 cabirrvyewdjalzbbbjhalxagdovek 1
-100 473522839 3 rvudgtahdoknysdhldmiyayfgbailc
-200 895399908 0 yujcozcvujlltsdklzsgdbcgkzhzoe 2
-200 897613252 3 rvudgtahdoknysdhldmiyayfgbailc 1
-300 966884141
+5 13
+100 1 0 sam
+100 2 1 sam
+100 3 2 sam
+100 4 3 sam
+100 5 4 sam
+200 6 3 sam 7
+100 7 3 sam
+300 8
+300 9
+100 10 0 sam
+300 12
+300 13
+300 14

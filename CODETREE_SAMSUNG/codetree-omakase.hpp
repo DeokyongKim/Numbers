@@ -8,7 +8,6 @@ using namespace std;
 
 typedef struct _GUEST {
   int amount;
-  string name;
   int index;
   int enterTime;
 } GUEST;
@@ -21,145 +20,98 @@ typedef struct _ORDER {
   int n = -1;
 } ORDER;
 
+typedef struct _SUSHI {
+  int index;
+  int enterTime;
+  int exitTime;
+} SUSHI;
+
 int beltLength, orderNum;
 
-map<string, vector<pair<int, int> > > list;
-vector<GUEST> guests;
+vector<string> names;
+
 vector<ORDER> orders;
 
-int curTime = 0, guestNum = 0, sushiNum = 0;
+map<string, vector<SUSHI> > sushies;
 
-int getCurrentSushiPosition(pair<int, int> sushi, int t) {
-  return (sushi.first + (t - sushi.second)) % beltLength;
-}
+map<string, GUEST> guests;
 
-void printSushies() {
-  int totalSushi = 0;
+int guestNum = 0, sushiNum = 0;
 
-  cout << "\nSUSHIES:\n";
-  for (auto id = list.begin(); id != list.end(); id++) {
-    string name = id -> first;
-    cout << name << " : ";
-    for (int i = 0; i < list[name].size(); i++) {
-      cout << getCurrentSushiPosition(list[name][i], curTime) << ", ";
-      totalSushi++;
-    }
-    cout << '\n';
+void printOrders() {
+  int total[400] = {0, };
+  for (int i = 0; i < orders.size(); i++) {
+    cout << orders[i].category << ' ' << orders[i].t << '\n';
+    total[orders[i].category]++;
   }
+
   cout << '\n';
+  cout << "TOTAL : \n";
+  cout << "100: " << total[100] << '\n';
+  cout << "111: " << total[111] << '\n';
+  cout << "200: " << total[200] << '\n';
+  cout << "222: " << total[222] << '\n';
+  cout << "300: " << total[300] << '\n';
 
-  if (totalSushi != sushiNum) cout << "PROBLEM!!!!!!!!!!!!!!!!!!!!!\n";
-}
-
-void printGuests() {
-  int totalGuest = 0;
-
-  cout << "\nGUESTS:\n";
-  for (int i = 0; i < guests.size(); i++) {
-    cout << guests[i].name << " : position is " << guests[i].index << ", amount is " << guests[i].amount << '\n';
-    totalGuest++;
-  }
-  cout << '\n';
-
-  if (totalGuest != guestNum) cout << "PROBLEM!!!!!!!!!!!!!!!!!!!!!\n";
-}
-
-bool isSushiInRange(int sushiIndex, int start, int end) {
-  
-  if (start <= end) {
-    if (start <= sushiIndex && end >= sushiIndex) return true;
-    return false;
-  } else {
-    if (start <= sushiIndex || end >= sushiIndex) return true;
-    return false;
-  }
-}
-
-void eatSushi(int guestId, int from, int to) {
-  string guestName = guests[guestId].name;
-
-  // cout << guestName << " EATS SUSHI FROM " << from << " to " << to << '\n';
-
-  for (int i = list[guestName].size()-1; i >= 0; i--) {
-    if (isSushiInRange(getCurrentSushiPosition(list[guestName][i], curTime), to, from)) {
-      list[guestName].erase(list[guestName].begin() + i);
-      sushiNum--;
-      guests[guestId].amount--;
-
-      if (guests[guestId].amount == 0) {
-        guests.erase(guests.begin() + guestId);
-        guestNum--;
-        break;
-      }
-    }
-  }
-
-  if (list[guestName].size() == 0) list.erase(guestName);
-}
-
-void rotateTable(int nextTime) {
-  int timeGap = nextTime - curTime;
-
-  for (int i = 0; i < guests.size(); i++) {
-    eatSushi(
-      i, 
-      (guests[i].index - 1 + beltLength) % beltLength, 
-      timeGap >= beltLength ? guests[i].index : ((guests[i].index - timeGap + beltLength) % beltLength)
-    );
-  }
-
-  curTime = nextTime;
-}
-
-void serveSushi(int orderIdx) {
-  ORDER cur = orders[orderIdx];
-
-  int t = cur.t, x = cur.x;
-  string name = cur.name;
-
-  rotateTable(t);
-
-  list[name].push_back({x, t});
-
-  sushiNum++;
-
-  for (int i = 0; i < guests.size(); i++) {
-    eatSushi(i, guests[i].index, guests[i].index);
-  }
-}
-
-void takeSushi(int orderIdx) {
-  ORDER cur = orders[orderIdx];
-
-  int t = cur.t, x = cur.x, n = cur.n;
-  string name = cur.name;
-
-  rotateTable(t);
-
-  guests.push_back({n, name, x, t});
-
-  int newGuestIndex = guests.size() - 1;
-
-  eatSushi(newGuestIndex, x, x);
-  
-  guestNum++;
-}
-
-void takePhoto(int orderIdx) {
-  ORDER cur = orders[orderIdx];
-
-  int t = cur.t;
-
-  rotateTable(t);
-
-  cout << guestNum << ' ' << sushiNum << '\n';
 }
 
 bool compare(ORDER a, ORDER b) {
   if (a.t == b.t) {
-    a.category < b.category;
-  } else {
-    return a.t < b.t;
+    return a.category < b.category;
+  }
+  return a.t < b.t;
+}
+
+int getSushiPositionByTime(SUSHI sushi, int t) {
+  return (sushi.index + t - sushi.enterTime) % beltLength;
+}
+
+void calculateExitTime(string name) {
+  int lastTime = 0;
+
+  int guestEnterTime = guests[name].enterTime;
+
+  for (int i = 0; i < sushies[name].size(); i++) {
+    if (sushies[name][i].enterTime < guestEnterTime) {
+      int curSushiIndex = getSushiPositionByTime(sushies[name][i], guestEnterTime);
+      sushies[name][i].exitTime = 
+        guestEnterTime + 
+        (guests[name].index - curSushiIndex + beltLength) % beltLength;
+    } else {
+      sushies[name][i].exitTime = 
+        sushies[name][i].enterTime + 
+        (guests[name].index - sushies[name][i].index + beltLength) % beltLength;
+    }
+
+    if (lastTime < sushies[name][i].exitTime) {
+      lastTime = sushies[name][i].exitTime;
+    }
+
+    ORDER sushiExitOrder;
+    sushiExitOrder.category = 111;
+    sushiExitOrder.n = -1;
+    sushiExitOrder.name = "empty";
+    sushiExitOrder.t = sushies[name][i].exitTime;
+    sushiExitOrder.x = -1;
+
+    orders.push_back(sushiExitOrder);
+  }
+
+  ORDER guestExitOrder;
+  guestExitOrder.category = 222;
+  guestExitOrder.n = -1;
+  guestExitOrder.name = "empty";
+  guestExitOrder.t = lastTime;
+  guestExitOrder.x = -1;
+
+  orders.push_back(guestExitOrder);
+}
+
+void calculateExitTimes() {
+  for (int i = 0; i < names.size(); i++) {
+    string name = names[i];
+
+    calculateExitTime(name);
   }
 }
 
@@ -174,33 +126,44 @@ void getOrder() {
   if (order == 100) {
     cin >> t >> x >> name;
     orders.push_back({order, t, x, name, -1});
+    sushies[name].push_back({x, t, -1});
   }
   if (order == 200) {
     cin >> t >> x >> name >> n;
     orders.push_back({order, t, x, name, n});
+    names.push_back(name);
+    guests[name].index = x;
+    guests[name].enterTime = t;
+    guests[name].amount = n;
   }
   if (order == 300) {
     cin >> t;
     orders.push_back({order, t, -1, "emtpy", -1});
   }
-
-  sort(orders.begin(), orders.end(), compare);
 }
 
 void getInput() {
   for (int i = 0; i < orderNum; i++) {
     getOrder();
   }
+  
+  calculateExitTimes();
+
+  sort(orders.begin(), orders.end(), compare);
 }
 
 void executeOrder(int orderIdx) {
-  if (orders[orderIdx].category == 100) serveSushi(orderIdx);
-  if (orders[orderIdx].category == 200) takeSushi(orderIdx);
-  if (orders[orderIdx].category == 300) takePhoto(orderIdx);
+  if (orders[orderIdx].category == 100) sushiNum++;
+  if (orders[orderIdx].category == 111) sushiNum--;
+  if (orders[orderIdx].category == 200) guestNum++;
+  if (orders[orderIdx].category == 222) guestNum--;
+  if (orders[orderIdx].category == 300) {
+    cout << guestNum << ' ' << sushiNum << '\n';
+  }
 }
 
 void executeOrders() {
-  for (int i = 0; i < orderNum; i++) {
+  for (int i = 0; i < orders.size(); i++) {
     executeOrder(i);
   }
 }
