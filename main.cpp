@@ -1,4 +1,4 @@
-#include "./CODETREE_SAMSUNG/hide-and-seek.hpp"
+#include "./CODETREE_SAMSUNG/artistry.hpp"
 #include <time.h>
 
 int main() {
