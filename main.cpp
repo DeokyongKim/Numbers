@@ -1,4 +1,4 @@
-#include "./CODETREE_SAMSUNG/artistry.hpp"
+#include "./CODETREE_SAMSUNG/ancient-ruin-exploration.hpp"
 #include <time.h>
 
 int main() {
