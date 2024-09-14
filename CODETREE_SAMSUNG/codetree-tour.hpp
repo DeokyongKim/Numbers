@@ -1,82 +1,101 @@
+// saw answer...
+
 #include <iostream>
 #include <vector>
 #include <queue>
-#include <algorithm>
 
+#define N_MAX 2010
+#define ID_MAX 30010
 #define INF 0x7fffffff
 
 using namespace std;
 
-typedef struct _TRIP {
+struct TRIP {
   int id;
   int revenue;
   int destination;
-} TRIP;
+  int profit;
+
+  struct Comparation {
+    bool operator()(const TRIP& a, const TRIP& b) const {
+      if (a.profit == b.profit) {
+        return a.id > b.id;
+      }
+
+      return a.profit < b.profit;
+    }
+  };
+};
+
+priority_queue<TRIP, vector<TRIP>, TRIP::Comparation> trips;
+
+int board[N_MAX][N_MAX], n, costs[N_MAX], isMade[ID_MAX], isCancled[ID_MAX];
 
 int start = 0;
 
-int board[2010][2010], orderNum, n, m, costs[2010];
-
-vector<TRIP> trips;
-
-void printTrips() {
-  for (int i = 0; i < trips.size(); i++) {
-    cout << trips[i].id << ' ';
+void setOneDimensionArray(int array[N_MAX]) {
+  for (int i = 0; i < n; i++) {
+    array[i] = INF;
   }
-  cout << '\n';
 }
 
-int visited[2010];
-void calculateCosts() {
-  for (int i = 0; i < n; i++) costs[i] = 0;
-  for (int i = 0; i < n; i++) visited[i] = 0;
+void dijkstra() {
+  int group[N_MAX] = {0, };
 
-  queue<int> q;
+  setOneDimensionArray(costs);
 
-  visited[start] = 1;
-  q.push(start);
+  costs[start] = 0;
 
-  while(!q.empty()) {
-    int cur = q.front();
-    q.pop();
+  for (int nodeCnt = 1; nodeCnt < n; nodeCnt++) {
+    // find closest one
+    int target = start, minDist = INF;
 
     for (int i = 0; i < n; i++) {
-      if (!visited[i] && board[cur][i] != INF) {
-        visited[i] = 1;
-        q.push(i);
-        costs[i] = costs[cur] + board[cur][i];
+      if (!group[i] && minDist > costs[i]) {
+        minDist = costs[i];
+        target = i;
+      }
+    }
+
+    group[target] = 1;
+
+    // calculate paths
+    for (int i = 0; i < n; i++) {
+      if (!group[i] && costs[target] != INF && board[target][i] != INF && costs[i] > costs[target] + board[target][i]) {
+        costs[i] = costs[target] + board[target][i];
       }
     }
   }
-
-  // for (int i = 0; i < n; i++) cout << costs[i] << ' ';
-  // cout << '\n';
 }
 
-void changeStartPoint() {
-  int point;
-  cin >> point;
+void setBoard() {
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      board[i][j] = INF;
 
-  start = point;
-
-  calculateCosts();
-}
-
-int cancleId;
-bool cancleComp(TRIP a, TRIP b) {
-  if (b.id == cancleId) return false;
-  if (a.id == cancleId) return true;
-  return true;
-}
-
-void cancleTrip() {
-  cin >> cancleId;
-  
-  sort(trips.begin(), trips.end(), cancleComp);
-
-  if (trips[0].id == cancleId) {
-    trips.erase(trips.begin());
+      if (i == j) board[i][j] = 0;
+    }
   }
+}
+
+void buildCodtreeLand() {
+  int m;
+  cin >> n >> m;
+
+  setBoard();
+
+  for (int i = 0; i < m; i++) {
+    int v, u, w;
+
+    cin >> v >> u >> w;
+
+    if (board[v][u] > w) {
+      board[v][u] = w;
+      board[u][v] = w;
+    }
+  }
+
+  dijkstra();
 }
 
 void makeTrip() {
@@ -84,70 +103,87 @@ void makeTrip() {
 
   cin >> id >> revenue >> destination;
 
-  trips.push_back({id, revenue, destination});
+  trips.push({
+    id,
+    revenue,
+    destination,
+    revenue - costs[destination],
+  });
+  isMade[id] = 1;
 }
 
-void makeCodeTreeLand() {
-  cin >> n >> m;
+void cancleTrip() {
+  int id;
 
-  for (int i = 0; i < n; i++) {
-    for (int j = 0; j < n; j++) {
-      board[i][j] = INF;
-      if (i == j) board[i][j] = 0;
+  cin >> id;
+
+  if (isMade[id]) isCancled[id] = 1;
+}
+
+int bestTrip() {
+  while(!trips.empty()) {
+    TRIP trip = trips.top();
+
+    if (trip.profit < 0) break;
+
+    trips.pop();
+
+    if (!isCancled[trip.id]) {
+      return trip.id;
     }
   }
 
-  for (int i = 0; i < m; i++) {
-    int from, to, cost;
-    cin >> from >> to >> cost;
-
-    if (from != to && board[from][to] > cost) {
-      board[from][to] = cost;
-      board[to][from] = cost;
-    }
-  }
-
-  calculateCosts();
-}
-
-bool sellComp(TRIP a, TRIP b) {
-  return a.revenue - costs[a.destination] > b.revenue - costs[b.destination];
+  return -1;
 }
 
 void sellBestTrip() {
-  sort(trips.begin(), trips.end(), sellComp);
-  // printTrips();
-
-  if (trips.size() > 0 && visited[trips[0].destination] && trips[0].revenue - costs[trips[0].destination] >= 0) {
-    cout << trips[0].id << '\n';
-    trips.erase(trips.begin());
-  } else {
-    cout << "-1\n";
-  }
+  cout << bestTrip() << '\n';
 }
 
-void getOrder() {
-  int orderType;
-  cin >> orderType;
-  // cout << orderType << '\n';
+void changeStartPoint() {
+  int point;
 
-  if (orderType == 100) makeCodeTreeLand();
-  if (orderType == 200) makeTrip();
-  if (orderType == 300) cancleTrip();
-  if (orderType == 400) sellBestTrip();
-  if (orderType == 500) changeStartPoint();
+  cin >> point;
+
+  start = point;
+
+  dijkstra();
+
+  vector<TRIP> tmp;
+
+  while(!trips.empty()) {
+    tmp.push_back(trips.top());
+    trips.pop();
+  }
+
+  for (int i = 0; i < tmp.size(); i++) {
+    trips.push({
+      tmp[i].id,
+      tmp[i].revenue,
+      tmp[i].destination,
+      tmp[i].revenue - costs[tmp[i].destination],
+    });
+  }
 }
 
 void solve() {
-  for (int i = 0; i < orderNum; i++) {
-    getOrder();
-  }
+  int order;
+  cin >> order;
+
+  if (order == 100) buildCodtreeLand();
+  if (order == 200) makeTrip();
+  if (order == 300) cancleTrip();
+  if (order == 400) sellBestTrip();
+  if (order == 500) changeStartPoint();
 }
 
 int run() {
-  cin >> orderNum;
+  int testMax;
+  cin >> testMax;
 
-  solve();
+  for (int i = 0; i < testMax; i++) {
+    solve();
+  }
 
   return 0;
 }
