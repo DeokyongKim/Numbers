@@ -1,4 +1,4 @@
-#include "./CODETREE_SAMSUNG/tree-kill-all.hpp"
+#include "./CODETREE_SAMSUNG/maze-runner.hpp"
 #include <time.h>
 
 int main() {
