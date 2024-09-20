@@ -1,4 +1,4 @@
-#include "./CODETREE_SAMSUNG/maze-runner.hpp"
+#include "./CODETREE_SAMSUNG/codetree-judger.hpp"
 #include <time.h>
 
 int main() {
