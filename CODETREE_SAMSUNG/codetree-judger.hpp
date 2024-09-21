@@ -1,206 +1,227 @@
 #include <iostream>
-#include <vector>
-#include <algorithm>
 #include <string>
-#include <set>
 #include <queue>
 #include <map>
+#include <set>
+
+#define MAX_DOMAIN 310
+#define MAX_N 50010
+#define INF 0x7fffffff
 
 using namespace std;
 
-typedef struct _ORDER {
-  int type;
-  int time;
-  int priority;
-  string url;
-  int N;
-  int id;
-} ORDER;
+map<string, int> domainToIndex;
+int domainCnt = 1;
 
-typedef struct _JUDGETIME {
+struct TASK {
+  int requestTime;
+  int priority;
+  string requestUrl;
+
+  bool operator < (const TASK& task) const {
+    if (priority == task.priority) return requestTime > task.requestTime;
+    return priority > task.priority;
+  }
+};
+
+priority_queue<TASK> requests[MAX_DOMAIN];
+set<string> requestUrls;
+
+priority_queue<int, vector<int>, greater<int> > spareJudgers;
+
+struct JUDGEINFORMATION {
   int start;
   int end;
-} JUDGETIME;
-
-int orderNum, judgerNum;
-
-vector<ORDER> orders;
-
-struct JUDGER_INDEX_COMPARE {
-  bool operator() (const int& a, const int& b) const {
-    return a > b;
-  }
+  bool judging;
 };
+JUDGEINFORMATION history[MAX_DOMAIN];
 
-priority_queue<int, vector<int>, JUDGER_INDEX_COMPARE> judgersIndex;
+int judgingDomainIndex[MAX_N];
 
-string isJudging[50010];
+string getDomain(string url) {
+  return url.substr(0, url.find("/"));
+}
 
-struct WAITING_COMPARE {
-  bool operator() (const _ORDER& a, const _ORDER& b) const {
-    if (a.priority == b.priority) return a.time > b.time;
-    else return a.priority > b.priority;
+void setJudgers(int n) {
+  for (int i = 1; i <= n; i++) {
+    spareJudgers.push(i);
+    judgingDomainIndex[i] = -1;
   }
-};
+}
 
-priority_queue<ORDER, vector<ORDER>, WAITING_COMPARE> waitings;
+bool postRequest(TASK task) {
+  string domain = getDomain(task.requestUrl);
 
-set<string> waitingUrls;
-set<string> judgingUrls;
-
-map<string, JUDGETIME> judgeHistory;
-
-void getOrder(int type) {
-  ORDER order = {0, };
-  order.type = type;
-
-  if (type == 100) {
-    cin >> order.N >> order.url;
-    order.time = -1;
-  } else if (type == 200) {
-    cin >> order.time >> order.priority >> order.url;
-  } else if (type == 300) {
-    cin >> order.time;
-  } else if (type == 400) {
-    cin >> order.time >> order.id;
-  } else if (type == 500) {
-    cin >> order.time;
+  if (!requestUrls.count(task.requestUrl)) {
+    requests[domainToIndex[domain]].push(task);
+    requestUrls.insert(task.requestUrl);
+    return true;
   }
-
-  orders.push_back(order);
-}
-
-bool orderComparator(ORDER a, ORDER b) {
-  return a.time < b.time;
-}
-
-void getOrders() {
-  cin >> orderNum;
-
-  for (int i = 0; i < orderNum; i++) {
-    int type;
-    cin >> type;
-
-    getOrder(type);
-  }
-
-  // sort(orders.begin(), orders.end(), orderComparator);
-}
-
-vector<string> split(string url, string spliter) {
-  int index = url.find(spliter);
-  return {url.substr(0, index), url.substr(index + 1, url.length() + 1 - index)};
-}
-
-void requestJudge(ORDER order) {
-  if (!waitingUrls.count(order.url)) {
-    waitings.push(order);
-    waitingUrls.insert(order.url);
-  }
-
-  // cout << order.type << " " << order.time << " :AFTER REQUEST: " << waitings.size() << '\n';
-}
-
-void setJudgers(ORDER order) {
-  for (int i = 0; i < order.N; i++) {
-    isJudging[i] = "";
-
-    judgersIndex.push(i+1);
-  }
-
-  requestJudge(order);
-}
-
-bool isDDOS(string domain, int currentTime) {
-  if (judgeHistory[domain].end == -1) return false;
-
-  int start = judgeHistory[domain].start, end = judgeHistory[domain].end;
-
-  int gap = end - start;
-
-  // cout << "TRY TIME: " << currentTime << ", STD TIME: " << start + 3 * gap << '\n';
-
-  if (currentTime < start + 3 * gap) return true;
-
   return false;
 }
 
-void tryJudge(ORDER order) {
-  vector<ORDER> tmpOrders;
+void requestJudge(TASK task) {
+  string domain = getDomain(task.requestUrl);
 
-  if (judgersIndex.empty()) return;
-
-  while(!waitings.empty()) {
-    ORDER nextOrder = waitings.top();
-    waitings.pop();
-
-    vector<string> domainAndId = split(nextOrder.url, "/");
-
-    string domain = domainAndId[0], id = domainAndId[1];
-
-    if (judgingUrls.count(domain) == 1 || isDDOS(domain, order.time)) {
-      tmpOrders.push_back(nextOrder);
-      continue;
-    }
-
-    int judgerIndex = judgersIndex.top();
-    judgersIndex.pop();
-    isJudging[judgerIndex] = split(nextOrder.url, "/")[0];
-
-    judgingUrls.insert(domain);
+  if (!domainToIndex[domain]) {
+    domainToIndex[domain] = domainCnt++;
     
-    judgeHistory[domain] = {
-      order.time,
-      -1
+    history[domainToIndex[domain]] = {
+      INF,
+      INF,
+      false,
     };
 
-    waitingUrls.erase(nextOrder.url);
-    // for (auto x : waitingUrls) {
-    //   cout << x << ' ';
-    // }
-    // cout << '\n';
-
-    break;
+    // cout << domain << " IS NEW!\n";
   }
 
-  for (int i = 0; i < tmpOrders.size(); i++) {
-    waitings.push(tmpOrders[i]);
+  postRequest(task);
+}
+
+bool isDDOS(int domainIndex, int requestTime) {
+  if (history[domainIndex].start == INF) return false;
+
+  int start = history[domainIndex].start;
+  int end = history[domainIndex].end;
+  int gap = end - start;
+
+  // cout << "START: " << start << " END: " << end << "RT: " << requestTime << '\n';
+
+  return requestTime < start + 3 * gap;
+}
+
+int getMostUrgentDomainIndex(int requestTime) {
+  int targetIndex = -1;
+  int minTime = INF;
+  int minPriority = INF;
+
+  for (int i = 1; i < domainCnt; i++) {
+    // if (requests[i].empty()) cout << "NO REQUEST IN DOMAIN " << i <<'\n';
+    // if (history[i].judging) cout << "JUDGING IN DOMAIN " << i <<'\n';
+    // if (isDDOS(i, requestTime)) cout << "DDOS IN DOMAIN " << i <<'\n';
+
+    if (!requests[i].empty() && !history[i].judging && !isDDOS(i, requestTime)) {
+      int rt = requests[i].top().requestTime;
+      int p = requests[i].top().priority;
+
+      if (minPriority >= p) {
+        if (minPriority > p) {
+          targetIndex = i;
+          minPriority = p;
+          minTime = rt;
+        } else if (minTime > rt) {
+          targetIndex = i;
+          minPriority = p;
+          minTime = rt;
+        }
+      }
+    }
   }
 
-  // cout << order.type << " " << order.time << " :AFTER TRY: " << waitings.size() << '\n';
+  return targetIndex;
 }
 
-void endJudge(ORDER order) {
-  if (isJudging[order.id] == "") return;
+void proceedJudge(int requestTime) {
+  if (spareJudgers.empty()) return;
 
-  int startTime = judgeHistory[isJudging[order.id]].start;
+  int mostUrgentDomainIndex = getMostUrgentDomainIndex(requestTime);
 
-  judgingUrls.erase(isJudging[order.id]);
-  judgeHistory[isJudging[order.id]] = {startTime, order.time};
-  judgersIndex.push(order.id);
-  isJudging[order.id] = "";
+  if (mostUrgentDomainIndex == -1) return;
 
-  // cout << order.type << " " << order.time << " :AFTER END: " << waitings.size() << '\n';
+  int judgerIndex = spareJudgers.top();
+  spareJudgers.pop();
+
+  TASK task = requests[mostUrgentDomainIndex].top();
+  requests[mostUrgentDomainIndex].pop();
+  requestUrls.erase(task.requestUrl);
+  // cout << "PROCEED REQUEST! " << task.requestUrl << '\n';
+
+  judgingDomainIndex[judgerIndex] = mostUrgentDomainIndex;
+  history[mostUrgentDomainIndex].start = requestTime;
+  history[mostUrgentDomainIndex].judging = true;
 }
 
-void executeOrder(ORDER order) {
-  if (order.type == 100) setJudgers(order);
-  if (order.type == 200) requestJudge(order);
-  if (order.type == 300) tryJudge(order);
-  if (order.type == 400) endJudge(order);
-  if (order.type == 500) cout << waitings.size() << '\n';
+void endJudging(int requestTime, int judgerIndex) {
+  if (judgingDomainIndex[judgerIndex] == -1) return;
+
+  int domainIndex = judgingDomainIndex[judgerIndex];
+
+  history[domainIndex].end = requestTime;
+  history[domainIndex].judging = false;
+
+  judgingDomainIndex[judgerIndex] = -1;
+
+  spareJudgers.push(judgerIndex);
+
+  // cout << "DOMAIN : " << domainIndex << "'s HISTORY: " << history[domainIndex].start << ", "<< history[domainIndex].end << ", "<< history[domainIndex].judging << "\n";
 }
 
-void executeOrders() {
-  for (int i = 0; i < orderNum; i++) {
-    executeOrder(orders[i]);
+int getTaskNumberInRequests() {
+  int ans = 0;
+  for (int i = 1; i < domainCnt; i++) {
+    ans += requests[i].size();
+    // if (!requests[i].empty()) cout << requests[i].top().requestUrl << ' ';
+  }
+  // cout << ": ";
+  return ans;
+}
+
+void getOrder() {
+  int type;
+  cin >> type;
+
+  if (type == 100) {
+    int N;
+    string url;
+
+    cin >> N >> url;
+
+    setJudgers(N);
+    requestJudge({0, 1, url});
+  } else if (type == 200) {
+    int requestTime, priority;
+    string url;
+
+    cin >> requestTime >> priority >> url;
+    // cout << type << ": " << requestTime << '\n';
+
+    requestJudge({requestTime, priority, url});
+  } else if (type == 300) {
+    int requestTime;
+    cin >> requestTime;
+    // cout << type << ": " << requestTime << '\n';
+    
+    proceedJudge(requestTime);
+  } else if (type == 400) {
+    int requestTime, judgerIndex;
+
+    cin >> requestTime >> judgerIndex;
+    // cout << type << ": " << requestTime << '\n';
+
+    endJudging(requestTime, judgerIndex);
+  } else if (type == 500) {
+    int requestTime;
+    cin >> requestTime;
+    // cout << type << ": " << requestTime << '\n';
+
+    cout << getTaskNumberInRequests() << '\n';
+  }
+
+  // cout << "REQUESTS: " << getTaskNumberInRequests() << '\n';
+}
+
+void getOrders() {
+  int maxOrder;
+  cin >> maxOrder;
+
+  for (int i = 0; i < maxOrder; i++) {
+    // cout << "\n\n NEW ORDER:\n";
+    getOrder();
   }
 }
 
 int run() {
   getOrders();
-
-  executeOrders();
 
   return 0;
 }
