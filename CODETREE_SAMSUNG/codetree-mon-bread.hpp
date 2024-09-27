@@ -10,6 +10,14 @@ using namespace std;
 typedef struct _COORDINATE {
   int x;
   int y;
+
+  bool operator == (_COORDINATE& other) {
+    return x == other.x && y == other.y;
+  }
+
+  bool operator != (_COORDINATE& other) {
+    return x != other.x || y != other.y;
+  }
 } COORDINATE;
 
 typedef struct _PERSON {
@@ -53,7 +61,7 @@ bool isOutOfBound(int x, int y) {
 
 bool isEveryoneArrived() {
   for (int i = 0; i < people.size(); i++) {
-    if (!isSameCoordi(people[i].position, people[i].destination)) return false;
+    if (people[i].position != people[i].destination) return false;
   }
   return true;
 }
@@ -78,7 +86,7 @@ vector<COORDINATE> getShortestPath(COORDINATE start, COORDINATE end) {
 
     COORDINATE cur = path[path.size() - 1];
 
-    if (isSameCoordi(cur, end)) return path;
+    if (cur == end) return path;
 
     int x = cur.x;
     int y = cur.y;
@@ -108,7 +116,7 @@ COORDINATE movePerson(PERSON& person) {
 
   person.position = person.path[1];
 
-  if (isSameCoordi(person.position, person.destination)) {
+  if (person.position == person.destination) {
     return person.position;
   }
 
@@ -123,11 +131,11 @@ vector<COORDINATE> movePeople(int t) {
   for (int i = 0; i < (t < people.size() ? t : people.size()); i++) {
     PERSON& person = people[i];
 
-    if (isSameCoordi(person.position, out) || isSameCoordi(person.position, person.destination)) continue;
+    if (person.position == out || person.position == person.destination) continue;
 
     COORDINATE newUnable = movePerson(person);
 
-    if (!isSameCoordi(newUnable, out)) newUnables.push_back(newUnable);
+    if (newUnable != out) newUnables.push_back(newUnable);
   }
 
   return newUnables;
@@ -156,7 +164,7 @@ COORDINATE getClosestBaseCamp(const PERSON& person) {
 
     vector<COORDINATE> path = getShortestPath(basecamp, end);
 
-    if (isSameCoordi(path[0], out)) continue;
+    if (path[0] == out) continue;
 
     int distance = path.size();
 
