@@ -30,7 +30,7 @@ int n, m;
 void printBelts() {
   for (int i = 1; i <= n; i++) {
     cout << "<BELT " << i << "> [CNT: " << belts[i].cnt << "] GIFTS: ";
-    for (int j = belts[j].front; j != -1; j = gifts[j].rear) {
+    for (int j = belts[i].front; j != -1; j = gifts[j].rear) {
       cout << j << ' ';
     }
     cout << '\n';
@@ -177,17 +177,30 @@ void moveHalfGifts(int from, int to) {
   GIFT& halfGift = gifts[halfGiftId];
 
   int newFromFront = halfGift.rear;
-  int oldToFront = bt.front;
+  if (bt.cnt == 0) {
+    halfGift.rear = -1;
+    gifts[newFromFront].front = -1;
 
-  halfGift.rear = oldToFront;
-  gifts[oldToFront].front = halfGiftId;
-  gifts[newFromFront].front = -1;
+    bt.front = bf.front;
+    bt.rear = halfGiftId;
+    bt.cnt += half;
 
-  bt.front = bf.front;
-  bt.cnt += half;
+    bf.front = newFromFront;
+    bf.cnt -= half;
+  } else {
+    int oldToFront = bt.front;
 
-  bf.front = newFromFront;
-  bf.cnt -= half;
+    halfGift.rear = oldToFront;
+    gifts[oldToFront].front = halfGiftId;
+    gifts[newFromFront].front = -1;
+
+    bt.front = bf.front;
+    bt.cnt += half;
+
+    bf.front = newFromFront;
+    bf.cnt -= half;
+  }
+
 }
 
 void getOrder() {
