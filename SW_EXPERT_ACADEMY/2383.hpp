@@ -1,52 +1,43 @@
 #include <iostream>
+#include <math.h>
 #include <vector>
 #include <algorithm>
 
-#define MAX_PEOPLE 10
-#define MAX_STAIR 2
 #define INF 0x7fffffff
+#define STAIR_MAX 2
 
 using namespace std;
-
-int abs(int a) {
-  return a < 0 ? -1 * a : a;
-}
 
 typedef struct _COORDINATE {
   int x;
   int y;
+
+  int getDist(_COORDINATE other) {
+    return abs(x - other.x) + abs(y - other.y);
+  }
 } COORDINATE;
 
 typedef struct _STAIR {
-  COORDINATE location;
+  COORDINATE position;
   int length;
-  vector<int> entered;
-  vector<int> waitings;
 } STAIR;
 
+vector<COORDINATE> people;
 vector<STAIR> stairs;
-typedef struct _PERSON {
-  int id;
-  COORDINATE location;
 
-  int dist(int stairId) {
-    COORDINATE cur = {location.x, location.y};
-    return abs(cur.x - stairs[stairId].location.x) + abs(cur.y - stairs[stairId].location.y);
-  }
-} PERSON;
-
-int n;
-vector<PERSON> people;
+vector<int> choices;
+int minTime = INF;
 
 void initialize() {
   people.clear();
   stairs.clear();
+  choices.clear();
+  minTime = INF;
 }
 
 void getInput() {
+  int n;
   cin >> n;
-
-  int cnt = 0;
 
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
@@ -54,122 +45,69 @@ void getInput() {
       cin >> tmp;
 
       if (tmp == 1) {
-        PERSON person;
-        person.id = cnt++;
-        person.location = {i, j};
-        people.push_back(person);
+        people.push_back({i, j});
       } else if (tmp > 1) {
-        STAIR stair;
-        stair.location = {i, j};
-        stair.length = tmp;
-        stairs.push_back(stair);
+        stairs.push_back({{i, j}, tmp});
       }
     }
   }
 }
 
-int minTime = INF;
+void getTime() {
+  vector<int> stairEnterTime[STAIR_MAX];
 
-bool isAllVisited(int visited[MAX_PEOPLE]) {
-  for (int i = 0; i < people.size(); i++) {
-    if (!visited[i]) return false;
+  for (int personId = 0; personId < choices.size(); personId++) {
+    int choice = choices[personId];
+    STAIR &stair = stairs[choice];
+
+    int distance = people[personId].getDist(stair.position);
+
+    stairEnterTime[choice].push_back(distance);
   }
-  return true;
-}
 
-bool isPassed(int curTime, int visited[MAX_PEOPLE]) {
-  for (int i = 0; i < people.size(); i++) {
-    if (!visited[i] && people[i].dist(0) < curTime && people[i].dist(1) < curTime) {
-      return true;
-    }
+  for (int stairId = 0; stairId < STAIR_MAX; stairId++) {
+    vector<int> &stair = stairEnterTime[stairId];
+
+    sort(stair.begin(), stair.end());
   }
-  return false;
-}
 
-vector<pair<int, int> > getMinPersonAndStairs(int curTime, int visited[MAX_PEOPLE]) {
-  vector<pair<int, int> > ans;
+  for (int stairId = 0; stairId < STAIR_MAX; stairId++) {
+    vector<int> &stair = stairEnterTime[stairId];
 
-  for (int i = 0; i < people.size(); i++) {
-    PERSON &person = people[i];
-    
-    if (!visited[i]) {
-      if (person.dist(0) == curTime) {
-        ans.push_back({i, 0});
-      }
-      if (person.dist(1) == curTime) {
-        ans.push_back({i, 1});
+    for (int i = 0; i < stair.size(); i++) {
+      if (i < 3) continue;
+
+      int outTime = stair[i-3] + stairs[stairId].length;
+
+      if (outTime > stair[i]) {
+        stair[i] = outTime;
       }
     }
   }
 
-  return ans;
+  int minOutTime = -1;
+
+  for (int stairId = 0; stairId < STAIR_MAX; stairId++) {
+    if (stairEnterTime[stairId].empty()) continue;
+
+    int outTime = stairEnterTime[stairId].back() + stairs[stairId].length + 1;
+    if (minOutTime < outTime) minOutTime = outTime;
+  }
+
+  if (minOutTime < minTime) minTime = minOutTime;
 }
 
-void dp(int curTime, int visited[MAX_PEOPLE], int lastOutTime) {
-  if (isPassed(curTime, visited)) {
-    cout << "AT " << curTime << " ALL PASSED\n";
-    
+void getMinTime() {
+  if (choices.size() == people.size()) {
+    getTime();
     return;
   }
 
-  if (isAllVisited(visited)) {
-    cout << "AT " << curTime << " ALL VISITED\n";
-    if (minTime > lastOutTime) minTime = lastOutTime;
-    return;
+  for (int i = 0; i < STAIR_MAX; i++) {
+    choices.push_back(i);
+    getMinTime();
+    choices.pop_back();
   }
-
-  for (int stairId = 0; stairId < MAX_STAIR; stairId++) {
-    STAIR &stair = stairs[stairId];
-
-    for (int i = stair.entered.size() - 1; i >= 0; i--) {
-      if (stair.entered[i] + stair.length >= curTime) {
-      cout << "ENTERED OUT AT " << curTime << "\n";
-        stair.entered.erase(stair.entered.begin() + i);
-      }
-    }
-
-    for (int i = stair.waitings.size() - 1; i >= 0; i--) {
-      if (stair.entered.size() < 3) {
-      cout << "WAITING: " << stair.waitings[i] << " ENTERED AT " << curTime << "\n";
-        stair.entered.push_back(curTime);
-        stair.waitings.erase(stair.waitings.begin() + i);
-
-        if (curTime + stair.length > lastOutTime) {
-          lastOutTime = curTime + stair.length;
-        }
-      }
-    }
-  }
-
-  vector<pair<int, int> > minPersonAndStairs = getMinPersonAndStairs(curTime, visited);
-  for (int index = 0; index < minPersonAndStairs.size(); index++) {
-    cout << "DOING\n";
-    int peopleId = minPersonAndStairs[index].first;
-    int minStairId = minPersonAndStairs[index].second;
-
-    PERSON &person = people[peopleId];
-    STAIR &stair = stairs[minStairId];
-
-    if (person.dist(minStairId) == curTime) {
-      cout << "PUSHED " << peopleId << " TO " << minStairId << '\n';
-      visited[peopleId] = 1;
-      stair.waitings.push_back(peopleId);
-      dp(curTime + 1, visited, lastOutTime);
-      visited[peopleId] = 0;
-      stair.waitings.pop_back();
-    }
-
-    dp(curTime + 1, visited, lastOutTime);
-  }
-  
-}
-
-int getShortestTime() {
-  int visited[MAX_PEOPLE] = {0, };
-
-  dp(0, visited, -1);
-
-  return minTime;
 }
 
 int solve() {
@@ -177,15 +115,17 @@ int solve() {
 
   getInput();
 
-  return getShortestTime();
+  getMinTime();
+
+  return minTime;
 }
 
 int run() {
-  int maxTest;
-  cin >> maxTest;
+  int testCaseNum;
+  cin >> testCaseNum;
 
-  for (int i = 0; i < maxTest; i++) {
-    cout << "#" << i+1 << ' ' << solve() << '\n';
+  for (int i = 1; i <= testCaseNum; i++) {
+    cout << "#" << i << ' ' << solve() << '\n';
   }
 
   return 0;
