@@ -32,7 +32,6 @@
 
 #include<iostream>
 #include <vector>
-#include <map>
 #include <queue>
 #include <math.h>
 #include <cstring>
@@ -46,12 +45,11 @@ typedef struct _NODE {
   vector<int> children;
 } NODE;
 
-map<int, NODE > nodes;
-int ans = 0;
+NODE nodes[MAX_N];
+long long int ans = 0;
 int dp[MAX_N][17];
 
 void initialize() {
-  nodes.clear();
   ans = 0;
   memset(dp, 0, sizeof(int) * MAX_N * 17);
 }
@@ -60,36 +58,35 @@ void getNodes() {
   int n;
   cin >> n;
 
+  nodes[1].children.clear();
   nodes[1].depth = 0;
 
   for (int i = 2; i <= n; i++) {
+    nodes[i].children.clear();
     int tmp;
     cin >> tmp;
     dp[i][0] = tmp;
     nodes[tmp].children.push_back(i);
     nodes[i].depth = nodes[tmp].depth + 1;
 
-    for (int id = 1; id < floor(log2(nodes[i].depth)); id++) {
+    for (int id = 1; id < floor(log2(nodes[i].depth)) + 1; id++) {
       dp[i][id] = dp[dp[i][id-1]][id-1];
     }
   }
 }
 
 int getCommonAncestor(int a, int b) {
-  // LCA algorithm
-  if (nodes[a].depth < nodes[b].depth) {
-    swap(a, b);
-  }
-
-  int difference = nodes[a].depth - nodes[b].depth;
-  for (int jump = 0; difference; jump++) {
-    if (difference % 2 == 1) a = dp[a][jump];
-
-    difference /= 2;
+ // LCA algorithm
+  if (nodes[a].depth > nodes[b].depth) {
+    a = dp[a][0];
+  } else if (nodes[b].depth > nodes[a].depth) {
+    b = dp[b][0];
   }
 
   if (a != b) {
-    for (int height = ceil(nodes[a].depth); height >= 0; height--) {
+    for (int height = ceil(log2(nodes[a].depth)); height >= 0; height--) {
+      if (nodes[a].depth < pow(2, height)) continue;
+      
       if (dp[a][height] != 0 && dp[a][height] != dp[b][height]) {
         a = dp[a][height];
         b = dp[b][height];
@@ -102,7 +99,7 @@ int getCommonAncestor(int a, int b) {
   return a;
 }
 
-int getDistance(int a, int b) {
+long long int getDistance(int a, int b) {
   int commonAncestor = getCommonAncestor(a, b);
 
   return nodes[a].depth - nodes[commonAncestor].depth + nodes[b].depth - nodes[commonAncestor].depth;
