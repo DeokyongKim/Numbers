@@ -35,65 +35,77 @@
 #include <map>
 #include <queue>
 #include <math.h>
+#include <cstring>
 
 #define MAX_N 100000
 
 using namespace std;
 
-vector<int> parentIds;
-map<int, vector<int> > nodes;
+typedef struct _NODE {
+  int depth;
+  vector<int> children;
+} NODE;
+
+map<int, NODE > nodes;
 int ans = 0;
+int dp[MAX_N][17];
 
 void initialize() {
-  parentIds.clear();
   nodes.clear();
   ans = 0;
+  memset(dp, 0, sizeof(int) * MAX_N * 17);
 }
 
 void getNodes() {
   int n;
   cin >> n;
-  parentIds.push_back(-1);
-  parentIds.push_back(0);
+
+  nodes[1].depth = 0;
 
   for (int i = 2; i <= n; i++) {
     int tmp;
     cin >> tmp;
-    parentIds.push_back(tmp);
-    nodes[tmp].push_back(i);
+    dp[i][0] = tmp;
+    nodes[tmp].children.push_back(i);
+    nodes[i].depth = nodes[tmp].depth + 1;
+
+    for (int id = 1; id < floor(log2(nodes[i].depth)); id++) {
+      dp[i][id] = dp[dp[i][id-1]][id-1];
+    }
   }
 }
 
-int getDistance(int a, int b) {
-  int visited[MAX_N] = {0, };
-
-  int aCnt = 1, bCnt = 1;
-  visited[a] = aCnt++;
-  visited[b] = bCnt++;
-
-  if (a == b) return 0;
-
-  // cout << a << " TO " << b << " IS ";
-
-  while(true) {
-    if (parentIds[a] > 0) {
-      a = parentIds[a];
-      if (visited[a] > 0) {
-        // cout << abs(visited[a] + aCnt - 2) << '\n'; 
-        return abs(visited[a] + aCnt - 2);
-      }
-      visited[a] = aCnt++;
-    }
-
-    if (parentIds[b] > 0) {
-      b = parentIds[b];
-      if (visited[b] > 0) {
-        // cout << abs(visited[b] + bCnt - 2) << '\n'; 
-        return abs(visited[b] + bCnt - 2);
-      }
-      visited[b] = bCnt++;
-    }
+int getCommonAncestor(int a, int b) {
+  // LCA algorithm
+  if (nodes[a].depth < nodes[b].depth) {
+    swap(a, b);
   }
+
+  int difference = nodes[a].depth - nodes[b].depth;
+  for (int jump = 0; difference; jump++) {
+    if (difference % 2 == 1) a = dp[a][jump];
+
+    difference /= 2;
+  }
+
+  if (a != b) {
+    for (int height = ceil(nodes[a].depth); height >= 0; height--) {
+      if (dp[a][height] != 0 && dp[a][height] != dp[b][height]) {
+        a = dp[a][height];
+        b = dp[b][height];
+      }
+    }
+
+    a = dp[a][0];
+  }
+
+  return a;
+}
+
+int getDistance(int a, int b) {
+  int commonAncestor = getCommonAncestor(a, b);
+
+  return nodes[a].depth - nodes[commonAncestor].depth + nodes[b].depth - nodes[commonAncestor].depth;
 }
 
 void bfs() {
@@ -108,8 +120,8 @@ void bfs() {
     ans += getDistance(nowPosition, cur);
     nowPosition = cur;
 
-    for (int i = 0; i < nodes[cur].size(); i++) {
-      q.push(nodes[cur][i]);
+    for (int i = 0; i < nodes[cur].children.size(); i++) {
+      q.push(nodes[cur].children[i]);
     }
   }
 }
