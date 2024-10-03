@@ -100,6 +100,8 @@ int getCommonAncestor(int a, int b) {
 }
 
 long long int getDistance(int a, int b) {
+  if (a == b) return 0;
+
   int commonAncestor = getCommonAncestor(a, b);
 
   return nodes[a].depth - nodes[commonAncestor].depth + nodes[b].depth - nodes[commonAncestor].depth;
