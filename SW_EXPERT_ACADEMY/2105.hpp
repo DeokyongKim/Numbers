@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstring>
 #include <vector>
+#include <math.h>
 
 #define MAX_N 20
 #define MAX_DISERT 110
@@ -47,45 +48,25 @@ bool isOutOfBound(COORDINATE point) {
 }
 
 vector<COORDINATE> getFUllPoints() {
-  COORDINATE two, four;
-
-  int x1 = points[0].x, y1 = points[0].y;
-  int x2 = points[1].x, y2 = points[1].y;
-
-  two.x = (y2-y1 + x1+x2) / 2;
-  two.y = (y1+y2 + x2-x1) / 2;
-  four.x = (y1-y2 + x1+x2) / 2;
-  four.y = (y1+y2 + x1-x2) / 2;
-
   vector<COORDINATE> ans;
+  ans.clear();
   ans.push_back(points[0]);
-  ans.push_back(two);
   ans.push_back(points[1]);
-  ans.push_back(four);
+  ans.push_back(points[3]);
+  ans.push_back(points[2]);
 
   return ans;
 }
 
-bool isAble() {
-  int x1 = points[0].x, y1 = points[0].y;
-  int x2 = points[1].x, y2 = points[1].y;
+void printArray(int array[MAX_N][MAX_N]) {
+  cout << '\n';
 
-  if (y2 - x2 >= y1 - x1 || y2+x2 <= y1+x1) return false;
-
-  if (x1 == x2) return false;
-
-  if ((y2-y1 + x1+x2) % 2) return false;
-  if ((y1+y2 + x2-x1) % 2) return false;
-  if ((y1-y2 + x1+x2) % 2) return false;
-  if ((y1+y2 + x1-x2) % 2) return false;
-
-  vector<COORDINATE> fullPoints = getFUllPoints();
-
-  for (int i = 0; i < fullPoints.size(); i++) {
-    if (isOutOfBound(fullPoints[i])) return false;
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      cout << array[i][j] << ' ';
+    }
+    cout << '\n';
   }
-
-  return true;
 }
 
 int getScore() {
@@ -93,19 +74,28 @@ int getScore() {
 
   int ans = 0;
 
+  vector<COORDINATE> fullPoints = getFUllPoints();
+
+  int route[MAX_N][MAX_N] = {0, };
+
   for (int i = 0; i < fullPoints.size(); i++) {
     COORDINATE a = fullPoints[i];
     COORDINATE b = fullPoints[(i + 1) % fullPoints.size()];
 
-    COORDINATE direction = {(b.x - a.x) / (b.x - a.x), (b.y - a.y) / (b.y - a.y)};
+    COORDINATE direction = {(b.x - a.x) / abs(b.x - a.x), (b.y - a.y) / abs(b.y - a.y)};
 
     COORDINATE constPoint = a;
 
-    for (int d = 0; d <= b.x - a.x; d++) {
+    for (int d = 0; d < abs(b.x - a.x); d++) {
       COORDINATE point = {constPoint.x + direction.x * d, constPoint.y + direction.y * d};
       int disert = board[point.x][point.y];
 
-      if (diserts[disert]) return -1;
+      route[point.x][point.y] = 1;
+
+      if (diserts[disert]) {
+        // cout << "DUPLICATE!\n";
+        return -1;
+      }
 
       diserts[disert] = 1;
 
@@ -113,32 +103,32 @@ int getScore() {
     }
   }
 
+  // printArray(route);
+
   return ans == 0 ? -1 : ans;
 }
 
-void dfs(int index) {
-  if (points.size() == 4) {
-    int score = getScore();
-
-    if (score > maxAmount) {
-      maxAmount = score;
-      
-      cout << "AMOUNT: " << maxAmount << '\n';
-
-      vector<COORDINATE> fullPoints = getFUllPoints();
-      cout << "COORDIs: ";
-      for (int i = 0; i < fullPoints.size(); i++) {
-        cout << "{"<< fullPoints[i].x << ", " << fullPoints[i].y << "}, ";
-      }
-      cout << '\n';
-    }
-    return;
-  }
-
-  for (int num = index; num < n * n; num++) {
-    if (isAble({i, j})) {
+void calculate() {
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
       points.push_back({i, j});
-      dfs(num + 1);
+      for (int lenTwo = 1; !isOutOfBound({i + lenTwo, j + lenTwo}); lenTwo++) {
+        points.push_back({i + lenTwo, j + lenTwo});
+        for (int lenFour = 1; !isOutOfBound({i + lenFour, j - lenFour}); lenFour++) {
+          points.push_back({i + lenFour, j - lenFour});
+          if (!isOutOfBound({i + lenTwo + lenFour, j + lenTwo - lenFour})) {
+            points.push_back({i + lenTwo + lenFour, j + lenTwo - lenFour});
+            
+            int score = getScore();
+
+            if (score > maxAmount) maxAmount = score;
+
+            points.pop_back();
+          }
+          points.pop_back();
+        }
+        points.pop_back();
+      }
       points.pop_back();
     }
   }
@@ -149,7 +139,7 @@ int solve() {
 
   getInput();
 
-  dfs(0);
+  calculate();
 
   return maxAmount;  
 }
